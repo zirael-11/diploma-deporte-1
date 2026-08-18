@@ -1,0 +1,96 @@
+<!--import React, { useState, useEffect } from 'react';
+import { Button, Container, Card, Navbar, Nav, Row, Col, Spinner } from 'react-bootstrap';
+
+function App() {
+  // Создаем переменные для хранения товаров и статуса загрузки
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // useEffect срабатывает ОДИН РАЗ при открытии страницы в браузере
+  useEffect(() => {
+    async function loadData() {
+      try {
+        // Та самая строчка! Vite возьмет URL из файла .env.dev
+        const response = await fetch(import.meta.env.VITE_API_URL + '/products');
+        const data = await response.json();
+        
+        setProducts(data); // Сохраняем полученные товары в память React
+      } catch (error) {
+        console.error("Ошибка при загрузке товаров:", error);
+      } finally {
+        setLoading(false); // Выключаем индикатор загрузки
+      }
+    }
+
+    loadData();
+  }, []);
+
+  return (
+    <div>
+      {/* ШАПКА САЙТА */}
+      <Navbar bg="dark" variant="dark" expand="lg">
+        <Container>
+          <Navbar.Brand href="#home">⚙️ Магазин Техники</Navbar.Brand>
+          <Nav className="ms-auto">
+            <Nav.Link href="#catalog">Каталог</Nav.Link>
+            <Nav.Link href="#cart">🛒 Корзина (0)</Nav.Link>
+          </Nav>
+        </Container>
+      </Navbar>
+
+      {/* ГЛАВНЫЙ КОНТЕНТ */}
+      <Container className="mt-5">
+        <h1 className="text-center mb-4">Каталог товаров</h1>
+        
+        {/* Если данные еще грузятся — показываем крутилку (Spinner) */}
+        {loading ? (
+          <div className="text-center mt-5">
+            <Spinner animation="border" variant="primary" />
+            <p className="mt-2">Загрузка товаров с сервера...</p>
+          </div>
+        ) : (
+          /* Когда данные загрузились — выводим их на экран циклом .map */
+          <Row>
+            {products.map((item) => (
+              <Col md={4} key={item.id} className="mb-4">
+                <Card>
+                  <Card.Body>
+                    <Card.Title>{item.title}</Card.Title>
+                    <Card.Text>{item.description}</Card.Text>
+                    <Card.Subtitle className="mb-3 text-muted">{item.price} ₽</Card.Subtitle>
+                    <Button variant="primary">В корзину</Button>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
+      </Container>
+    </div>
+  );
+}
+
+export default App;
+
+npm create vite@latest . -- --template react
+npm run dev
+npm uninstall oxlint
+npm install react-bootstrap bootstrap
+pip3 --version
+poetry --version
+mkdir backend
+cd backend
+poetry init
+cd ..
+npm run dev
+touch .env .env.dev
+
+
+
+3/08/2026 
+В данный момент бэкенд-сервер на FastAPI, развернутый в 
+изолированном окружении Poetry, запущен локально в режиме разработки.
+Поскольку на финальном сервере проект будет работать через веб-сервер Nginx, 
+все запросы будут автоматически проксироваться с фронтенда по единому 
+защищенному адресу, 
+и разработчику не нужно вручную открывать порт 8000 в браузере.

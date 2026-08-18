@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # 1. СЕРВИС FASTAPI БЭКЕНДА
+  backend:
+    build: ./backend
+    container_name: deporte-fastapi-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://nika:admin@deporte-db:5432/deporte_shop
+    network_mode: "bridge" # ИСПРАВЛЕНО: Принудительно сажаем бэкенд в стандартную общую сеть
+
+  # 2. СЕРВИС ОБРАТНОГО ПРОКСИ-СЕРВЕРА NGINX
+  nginx_server:
+    image: nginx:alpine
+    container_name: deporte-nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    network_mode: "bridge" # ИСПРАВЛЕНО: Принудительно сажаем Nginx в стандартную общую сеть
