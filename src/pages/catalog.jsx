@@ -55,6 +55,50 @@ import russiaussr from '../assets/images/russiaussr.png';
 import russiaussr2 from '../assets/images/russiaussr2.png';
 
 function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
+   // Состояния для формы добавления нового товара модератором
+  const [newTitle, setNewTitle] = useState('');
+  const [newCategory, setNewCategory] = useState('Форма сборных');
+  const [newCountry, setNewCountry] = useState('');
+  const [newClub, setNewClub] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newImage, setNewImage] = useState('spainfuria2026.png'); // картинка по умолчанию
+    const handleCreateProduct = async (e) => {
+    e.preventDefault();
+    if (!newTitle || !newPrice) return alert('Заполните название и цену!');
+
+    const cleanPriceNum = parseInt(newPrice.replace(/[^\d]/g, '')) || 0;
+    const formattedPriceStr = `${cleanPriceNum.toLocaleString('ru-RU')} ₽`;
+
+    const productPayload = {
+      title: newTitle,
+      main_category: newCategory,
+      country: newCountry || null,
+      club: newClub || null,
+      year: "2026",
+      type: "Домашняя",
+      price_num: cleanPriceNum,
+      price_str: formattedPriceStr,
+      description: `Официальная футбольная экипировка модели премиум-качества.`,
+      image: newImage,
+      image_hover: newImage
+    };
+
+    try {
+      const response = await fetch('http://localhost/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productPayload)
+      });
+      if (response.ok) {
+        alert('🎉 Товар успешно добавлен в PostgreSQL через Nginx!');
+        // Перезагружаем страницу, чтобы обновить список из БД
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка при добавлении товара');
+    }
+  };
   const mainCategories = ['Все', 'Форма сборных', 'Форма по клубам', 'Бутсы', 'Мячи'];
   const countriesList = ['Испания', 'Германия', 'Англия', 'Франция', 'Италия', 'Россия'];
   const clubLeagues = {
@@ -269,6 +313,52 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
 
       <div className="catalog-main-content-right">
         <div className="catalog-results-counter">Найдено позиций: <strong>{filteredProducts.length}</strong></div>
+        {/* ИСПРАВЛЕНО: Панель добавления нового товара строго для модератора */}
+        {currentUser.role === 'moderator' && (
+          <form onSubmit={handleCreateProduct} style={{ backgroundColor: '#1e1e1e', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '2px dashed #e67e22', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <h3 style={{ color: '#e67e22', margin: 0, fontWeight: 900 }}>⚙️ ДОБАВЛЕНИЕ НОВОГО ТОВАРА В POSTGRESQL</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Название товара:</label>
+                <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Например: Форма ФК Зенит" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #333', backgroundColor: '#111', color: '#fff' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Стоимость (₽):</label>
+                <input type="text" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="Например: 5500" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #333', backgroundColor: '#111', color: '#fff' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Категория:</label>
+                <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #333', backgroundColor: '#111', color: '#fff' }}>
+                  <option value="Форма сборных">Форма сборных</option>
+                  <option value="Форма по клубам">Форма по клубам</option>
+                  <option value="Бутсы">Бутсы</option>
+                  <option value="Мячи">Мячи</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Страна (если форма):</label>
+                <input type="text" value={newCountry} onChange={e => setNewCountry(e.target.value)} placeholder="Например: Россия" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #333', backgroundColor: '#111', color: '#fff' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Клуб (если клубная):</label>
+                <input type="text" value={newClub} onChange={e => setNewClub(e.target.value)} placeholder="Например: Зенит" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #333', backgroundColor: '#111', color: '#fff' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Файл картинки из assets:</label>
+                <select value={newImage} onChange={e => setNewImage(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #333', backgroundColor: '#111', color: '#fff' }}>
+                  <option value="russiaussr.png">Россия (russiaussr.png)</option>
+                  <option value="englandhome2026.png">Англия (englandhome2026.png)</option>
+                  <option value="spainfuria2026.png">Испания (spainfuria2026.png)</option>
+                  <option value="germanhome2026.png">Германия (germanhome2026.png)</option>
+                  <option value="italysbor2026.png">Италия (italysbor2026.png)</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" style={{ backgroundColor: '#e67e22', color: '#fff', padding: '12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', letterSpacing: '1px', transition: '0.3s' }}>СОХРАНИТЬ В БАЗУ ДАННЫХ 💾</button>
+          </form>
+        )}
         <div className="products-grid-container grid-4-columns">
           {filteredProducts.map(p => {
             const isFav = favorites.some(f => f.id === p.id);

@@ -1,24 +1,56 @@
-version: '3.8'
-
 services:
-  # 1. СЕРВИС FASTAPI БЭКЕНДА
-  backend:
-    build: ./backend
-    container_name: deporte-fastapi-backend
+  # 1. СЕРВИС ОБРАТНОГО ПРОКСИ-СЕРВЕРА NGINX (WEB-SERVER)
+  web-server:
+    image: nginx:stable-alpine3.23
+    container_name: deporte-web-server
     ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://nika:admin@deporte-db:5432/deporte_shop
-    network_mode: "bridge" # ИСПРАВЛЕНО: Принудительно сажаем бэкенд в стандартную общую сеть
-
-  # 2. СЕРВИС ОБРАТНОГО ПРОКСИ-СЕРВЕРА NGINX
-  nginx_server:
-    image: nginx:alpine
-    container_name: deporte-nginx-proxy
-    ports:
-      - "80:80"
+      - "80:80"  # Для диплома лучше оставить стандартный 80 порт (или 8080:80 как у препода)
     volumes:
       - ./backend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - deporte_network
     depends_on:
       - backend
-    network_mode: "bridge" # ИСПРАВЛЕНО: Принудительно сажаем Nginx в стандартную общую сеть
+
+  # 2. СЕРВИС БАЗЫ ДАННЫХ POSTGRESQL (DATABASE)
+  database:
+    image: postgres:14-alpine3.23
+    container_name: deporte-database
+    shm_size: 128mb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=nika
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=deporte_shop
+    networks:
+      - deporte_network
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "nika", "-d", "deporte_shop" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # 3. СЕРВИС FASTAPI БЭКЕНДА (BACKEND)
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    container_name: deporte-backend
+    volumes:
+      - ./backend/app:/app/app
+    env_file:
+      - ./backend/app/.env
+    command: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - deporte_network
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+
+networks:
+  deporte_network:
