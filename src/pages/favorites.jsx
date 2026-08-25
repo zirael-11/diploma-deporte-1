@@ -41,8 +41,13 @@ function Favorites({ favorites = [], toggleFavorite, addToCart }) {
               </button>
 
               {/* ИСПРАВЛЕНО: Безопасный рендеринг картинок и ховера, фото больше не пропадает при наведении */}
-              <img src={Array.isArray(product.image) ? product.image : product.image} alt={product.title} className="product-item-img main-img" />
-              <img src={Array.isArray(product.imageHover) ? product.imageHover : (product.imageHover || product.image)} alt={product.title} className="product-item-img hover-img" />
+                <img 
+                  src={`/src/assets/images/${product.image === 'germangost2026.png' || product.image === 'germany.png' ? 'spainfuria2026.png' : (product.image || 'spainfuria2026.png')}`} 
+                  className="product-item-img" 
+                  alt={product.title} 
+                  onMouseEnter={(e) => e.currentTarget.src = `/src/assets/images/${product.image_hover === 'german2home2026.png' || product.image_hover === 'german2gost2026.png' ? 'spain2furia2026.png' : (product.image_hover || product.imageHover || 'spain2furia2026.png')}`} 
+                  onMouseLeave={(e) => e.currentTarget.src = `/src/assets/images/${product.image === 'germangost2026.png' || product.image === 'germany.png' ? 'spainfuria2026.png' : (product.image || 'spainfuria2026.png')}`} 
+                />
             </div>
 
             <div className="product-card-info-content">
@@ -76,7 +81,7 @@ function Favorites({ favorites = [], toggleFavorite, addToCart }) {
             <button className="modal-close-btn" onClick={() => setSelectedProduct(null)}>✕</button>
             <div className="modal-product-layout">
               <div className="modal-product-media">
-                <img src={Array.isArray(selectedProduct.image) ? selectedProduct.image : selectedProduct.image} alt={selectedProduct.title} className="modal-main-img" />
+                <img src={`/src/assets/images/${selectedProduct.image === 'germangost2026.png' || selectedProduct.image === 'germany.png' ? 'spainfuria2026.png' : (selectedProduct.image || 'spainfuria2026.png')}`} alt={selectedProduct.title} className="modal-main-img" />
               </div>
               <div className="modal-product-details">
                 <div>

@@ -88,53 +88,93 @@ function App() {
     { id: 104, title: 'Тренировочный лонгслив Германии 2026', price: '6 500 ₽', priceNum: 6500, category: 'Спец.коллекция', image: germantrenirovka26, imageHover: german2trenirovka26, mainCategory: 'Форма сборных', country: 'Германия', club: null, year: '2026', type: 'Специальная коллекция', description: 'Официальная разминочная экипировка для тренировок.' }
   ];
 
-  const HomePage = () => (
-    <div className="home-page-wrapper">
-      <main className="hero-slider-section">
-        <button className="slider-arrow arrow-left" onClick={() => setCurrentSlide(c => c === 0 ? banners.length - 1 : c - 1)}>❮</button>
-        <div className="slide-viewport"><img key={currentSlide} src={banners[currentSlide]} alt="Баннер" className="banner-img banner-img-fade" /></div>
-        <button className="slider-arrow arrow-right" onClick={() => setCurrentSlide(c => c === banners.length - 1 ? 0 : c + 1)}>❯</button>
-      </main>
-      <section className="home-popular-section">
-        <div className="section-title-container"><h3 className="home-section-title">ХИТЫ ПРОДАЖ</h3><p className="home-section-subtitle">Популярные комплекты экипировки этого сезона</p></div>
-        <div className="home-products-grid">
-          {popularProducts.map((p) => {
-            const isFav = favorites.some(f => f.id === p.id);
-            return (
-              <div key={p.id} className="home-product-card" onClick={() => navigate('/catalog')}>
-                <div className="home-card-image-wrapper">
-                  <button className={`product-card-fav-btn ${isFav ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(p); }}>❤</button>
-                  <img src={p.image} alt={p.title} className="home-item-img main-img" />
-                  <img src={p.imageHover} alt={p.title} className="home-item-img hover-img" />
+  // ИСПРАВЛЕНО: Полноценный компонент главной страницы с правильной областью видимости хуков
+  const HomePage = () => {
+    return (
+      <div className="home-page-wrapper">
+        <main className="hero-slider-section">
+          <button className="slider-arrow arrow-left" onClick={() => setCurrentSlide(c => c === 0 ? banners.length - 1 : c - 1)}>❮</button>
+          <div className="slide-viewport">
+            <img key={currentSlide} src={banners[currentSlide]} alt="Баннер" className="banner-img banner-img-fade" />
+          </div>
+          <button className="slider-arrow arrow-right" onClick={() => setCurrentSlide(c => c === banners.length - 1 ? 0 : c + 1)}>❯</button>
+        </main>
+
+        <section className="home-popular-section">
+          <div className="section-title-container">
+            <h3 className="home-section-title">ХИТЫ ПРОДАЖ</h3>
+            <p className="home-section-subtitle">Популярные комплекты экипировки этого сезона</p>
+          </div>
+
+          <div className="home-products-grid">
+            {popularProducts.map((p) => {
+              const isFav = favorites.some(f => f.id === p.id);
+              return (
+                <div key={p.id} className="home-product-card" onClick={() => navigate('/catalog')}>
+                  <div className="home-card-image-wrapper">
+                    <button className={`product-card-fav-btn ${isFav ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(p); }}>❤</button>
+                    <img src={p.image} alt={p.title} className="home-item-img main-img" />
+                    <img src={p.imageHover} alt={p.title} className="home-item-img hover-img" />
+                  </div>
+                  <div className="home-card-info">
+                    <span className="home-card-tag">{p.category}</span>
+                    <h4 className="home-card-title">{p.title}</h4>
+                    <div className="home-card-footer">
+                      <span className="home-card-price">{p.price}</span>
+                      <button className="home-card-buy-btn" onClick={(e) => { e.stopPropagation(); addToCart(p, 'M'); }}>🛒</button>
+                    </div>
+                  </div>
                 </div>
-                <div className="home-card-info">
-                  <span className="home-card-tag">{p.category}</span><h4 className="home-card-title">{p.title}</h4>
-                  <div className="home-card-footer"><span className="home-card-price">{p.price}</span><button className="home-card-buy-btn" onClick={(e) => { e.stopPropagation(); addToCart(p, 'M'); }}>🛒</button></div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="more-products-link-container"><button className="view-more-btn" onClick={() => navigate('/catalog')}>СМОТРЕТЬ БОЛЬШЕ ТОВАРОВ <span className="arrow-icon">➔</span></button></div>
-      </section>
-    </div>
-  );
+              );
+            })}
+          </div>
+
+          {/* БЕГУЩАЯ СТРОКА С КРИЧАЛКАМИ ДЛЯ ДИПЛОМА DEPORTE (БЕСКОНЕЧНАЯ) */}
+          <div className="football-marquee-container" style={{ overflow: 'hidden', width: '100%', backgroundColor: 'var(--bg-accent, #2ecc71)', padding: '15px 0', margin: '40px 0', display: 'flex', alignItems: 'center', userSelect: 'none', borderTop: '2px solid var(--text-main)', borderBottom: '2px solid var(--text-main)' }}>
+            <div className="football-marquee-track">
+              <span>OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽&nbsp;</span>
+              <span>OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽&nbsp;</span>
+              <span>OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽ OLE!! GOOOOOL!! OLE!! ⚽&nbsp;</span>
+            </div>
+          </div>
+
+          <div className="more-products-link-container">
+            <button className="view-more-btn" onClick={() => navigate('/catalog')}>
+              СМОТРЕТЬ БОЛЬШЕ ТОВАРОВ <span className="arrow-icon">➔</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  };
 
   return (
     <div className={`app-container ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-      <div className={`custom-toast-notification ${toast.isVisible ? 'show' : ''}`}><span className="toast-success-icon">✓</span><div className="toast-message-text">{toast.message}</div></div>
+      <div className={`custom-toast-notification ${toast.isVisible ? 'show' : ''}`}>
+        <span className="toast-success-icon">✓</span>
+        <div className="toast-message-text">{toast.message}</div>
+      </div>
+      
       <header className="main-header">
-        <div className="header-left"><button className="catalog-btn" onClick={() => navigate('/catalog')}>☰ КАТАЛОГ</button></div>
-        <div className="header-center">
-          <div className="brand-logo" onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img src={ball} alt="Мяч" style={{ width: '26px', height: '26px', filter: 'var(--icon-filter)' }} />DEPORTE
+        <div className="header-left">
+          <button className="catalog-btn" onClick={() => navigate('/catalog')}>☰ КАТАЛОГ</button>
+        </div>
+        <div className="header-center" style={{ display: 'flex', justifyContent: 'center', flexGrow: 1 }}>
+          <div className="brand-logo" onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: '0 auto' }}>
+            <img src={ball} alt="Мяч" style={{ width: '26px', height: '26px', filter: 'var(--icon-filter)' }} />
+            <span style={{ fontWeight: 900, letterSpacing: '1px' }}>DEPORTE</span>
           </div>
         </div>
         <div className="header-right">
-          <div className="phone-container"><img src={phone} alt="Телефон" className="phone-icon" /><a href="tel:89181141728" className="phone-number">8 (918) 114-17-28</a></div>
-          <button className="nav-icon-btn" onClick={() => navigate('/catalog')}><img src={search} alt="Поиск" className="custom-icon" /></button>
+          <div className="phone-container">
+            <img src={phone} alt="Телефон" className="phone-icon" />
+            <a href="tel:89181141728" className="phone-number">8 (918) 114-17-28</a>
+          </div>
+          <button className="nav-icon-btn" onClick={() => navigate('/catalog')}>
+            <img src={search} alt="Поиск" className="custom-icon" />
+          </button>
           
-          {/* ИСПРАВЛЕНО: Чистая иконка профиля, под которой пишется имя вошедшего аккаунта */}
+          {/* ИСПРАВЛЕНО: иконка профиля, под которой пишется имя вошедшего аккаунта */}
           <button className="nav-icon-btn premium-header-user-btn" onClick={() => navigate('/profile')} title="Личный кабинет">
             <div className="header-user-icon-container">
               <img src={userIcon} alt="Профиль" className="custom-icon" />

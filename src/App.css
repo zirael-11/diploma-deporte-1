@@ -1904,3 +1904,41 @@ body {
 .profile-nav-wrapper .role-badge {
   display: none !important;
 }
+
+/* ================= БЕГУЩАЯ СТРОКА С ПОДДЕРЖКОЙ СМЕНЫ ТЕМ ================= */
+/* Базовый контейнер бегущей строки */
+.football-marquee-container {
+  pointer-events: none; /* Полностью отключаем реакцию на мышку — строка больше НЕ остановится! */
+}
+
+
+.football-marquee-track {
+  display: flex !important;
+  white-space: nowrap !important;
+  width: max-content !important;
+  animation: marquee-infinite-scroll 20s linear infinite !important; /* 20 секунд — идеальная плавная скорость */
+}
+
+/* Стили самих букв кричалок */
+.football-marquee-track span {
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 28px !important;
+  font-weight: 900 !important;
+  letter-spacing: 2px !important;
+  color: var(--bg-main, #ffffff) !important;
+  text-transform: uppercase !important;
+  padding-right: 0 !important;
+  display: inline-block !important;
+}
+
+@keyframes marquee-infinite-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.33%); /* Сдвигаем ровно на длину одного блока текста */
+  }
+}
+.football-marquee-container:hover .football-marquee-track {
+  animation-play-state: paused; /* Строка замрёт, если навести на неё курсор */
+}

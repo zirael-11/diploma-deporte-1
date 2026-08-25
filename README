@@ -1,76 +1,52 @@
-<!--import React, { useState, useEffect } from 'react';
-import { Button, Container, Card, Navbar, Nav, Row, Col, Spinner } from 'react-bootstrap';
+# DEPORTE — Интернет-магазин футбольной экипировки премиум-качества
 
-function App() {
-  // Создаем переменные для хранения товаров и статуса загрузки
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+Современное SPA-приложение (Single Page Application) для продажи спортивной одежды, разработанное с использованием асинхронной серверной архитектуры, контейнеризации и передовых подходов к проектированию пользовательских интерфейсов.
 
-  // useEffect срабатывает ОДИН РАЗ при открытии страницы в браузере
-  useEffect(() => {
-    async function loadData() {
-      try {
-        // Та самая строчка! Vite возьмет URL из файла .env.dev
-        const response = await fetch(import.meta.env.VITE_API_URL + '/products');
-        const data = await response.json();
-        
-        setProducts(data); // Сохраняем полученные товары в память React
-      } catch (error) {
-        console.error("Ошибка при загрузке товаров:", error);
-      } finally {
-        setLoading(false); // Выключаем индикатор загрузки
-      }
-    }
+##Архитектурный стек проекта
 
-    loadData();
-  }, []);
+Проект спроектирован по принципу разделения ответственности (**Separation of Concerns**) и развёрнут в изолированных контейнерах:
 
-  return (
-    <div>
-      {/* ШАПКА САЙТА */}
-      <Navbar bg="dark" variant="dark" expand="lg">
-        <Container>
-          <Navbar.Brand href="#home">⚙️ Магазин Техники</Navbar.Brand>
-          <Nav className="ms-auto">
-            <Nav.Link href="#catalog">Каталог</Nav.Link>
-            <Nav.Link href="#cart">🛒 Корзина (0)</Nav.Link>
-          </Nav>
-        </Container>
-      </Navbar>
+*   **Frontend**: React (Vite), React Router DOM (асинхронная маршрутизация на клиенте).
+*   **Backend**: FastAPI, Python 3.11, асинхронный ORM SQLAlchemy 2.0 (Async Session).
+*   **СУБД**: PostgreSQL 15, развёрнутая в Docker.
+*   **Веб-сервер и Реверс-прокси**: Nginx в Docker-контейнере (для оркестрации API и статических медиа-ресурсов).
+*   **Контейнеризация**: Docker Desktop, Docker Compose.
 
-      {/* ГЛАВНЫЙ КОНТЕНТ */}
-      <Container className="mt-5">
-        <h1 className="text-center mb-4">Каталог товаров</h1>
-        
-        {/* Если данные еще грузятся — показываем крутилку (Spinner) */}
-        {loading ? (
-          <div className="text-center mt-5">
-            <Spinner animation="border" variant="primary" />
-            <p className="mt-2">Загрузка товаров с сервера...</p>
-          </div>
-        ) : (
-          /* Когда данные загрузились — выводим их на экран циклом .map */
-          <Row>
-            {products.map((item) => (
-              <Col md={4} key={item.id} className="mb-4">
-                <Card>
-                  <Card.Body>
-                    <Card.Title>{item.title}</Card.Title>
-                    <Card.Text>{item.description}</Card.Text>
-                    <Card.Subtitle className="mb-3 text-muted">{item.price} ₽</Card.Subtitle>
-                    <Button variant="primary">В корзину</Button>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        )}
-      </Container>
-    </div>
-  );
-}
+---
 
-export default App;
+## Ключевой функционал приложения
+
+1.  **Динамическая витрина и Каталог товаров**:
+    *   Асинхронное получение актуальных позиций напрямую из СУБД PostgreSQL.
+    *   Интерактивная «живая» фильтрация позиций по типу экипировки, сезону выпуска и ценовому диапазону.
+    *   **Interactive Fluid Hover**: автоматическая плавная смена ракурса формы (лицо / вид со спины) при наведении курсора на карточку товара.
+2.  **Асинхронная система Избранного (Закладки)**:
+    *   Возможность каскадного добавления товаров в персональный список отслеживания без перезагрузки страниц страницы.
+3.  **Интерактивное модальное окно (Quick View)**:
+    *   Просмотр детализированной информации о товаре, выбор размеров и поддержка динамической смены ракурса при наведении.
+4.  **Корзина с динамическим расчётом**:
+    *   Интерактивное изменение количества позиций (`+ / -`) с мгновенным реактивным пересчётом общей стоимости, позиций и валидацией данных.
+5.  **Панель Модератора (Админка)**:
+    *   Добавление новых товаров через форму с последующей отправкой асинхронных `POST`-запросов в PostgreSQL.
+    *   Каскадное удаление карточек (`DELETE`-запросы) прямо из интерфейса витрины.
+
+---
+
+## Инструкция по локальному развёртыванию (НИКА НЕ ТУПИ!!)
+
+### 1. Запуск серверной инфраструктуры в Docker
+Убедись, что запущен Docker Desktop, перейдите в каталог `backend/` и выполни команду для чистой сборки контейнеров и инициализации базы данных:
+```bash
+docker-compose down --volumes && docker-compose up --build
+```
+
+### 2. Запуск клиентского приложения React
+Открой второй терминал, перейди в корневой каталог проекта, установите зависимости и запусти локальный веб-сервер Vite:
+```bash
+npm install
+npm run dev
+```
+После запуска проект будет доступен в браузере по адресу: `http://localhost:5173`.
 
 npm create vite@latest . -- --template react
 npm run dev

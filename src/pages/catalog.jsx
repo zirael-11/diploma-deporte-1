@@ -1,58 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// ИМПОРТ ИСПАНСКИХ КОМПЛЕКТОВ КАРТИНОК
-import spainfuria2026 from '../assets/images/spainfuria2026.png';
-import spain2furia2026 from '../assets/images/spain2furia2026.png';
-import spaindelafuente from '../assets/images/spaindelafuente.png';
-import spaindelafuente2 from '../assets/images/spaindelafuente2.png';
-import spainflores from '../assets/images/spainflores.png';
-import spainflores2 from '../assets/images/spainflores2.png';
-import spainrukav from '../assets/images/spainrukav.png';
-import spainrukav2 from '../assets/images/spainrukav2.png';
-import spainvratar from '../assets/images/spainvratar.png';
-import spainvratar2 from '../assets/images/spainvratar2.png';
 
-// ИМПОРТ НЕМЕЦКИХ КОМПЛЕКТОВ КАРТИНОК
-import germanhome2026 from '../assets/images/germanhome2026.png';
-import german2home2026 from '../assets/images/german2home2026.png';
-import germangost2026 from '../assets/images/germangost2026.png';
-import german2gost2026 from '../assets/images/german2gost2026.png';
-import germangost2022 from '../assets/images/germangost2022.png';
-import german2gost2022 from '../assets/images/german2gost2022.png';
-import germantrenirovka26 from '../assets/images/germantrenirovka26.png';
-import german2trenirovka26 from '../assets/images/german2trenirovka26.png';
-import germancostume2024 from '../assets/images/germancostume2024.png';
-import german2costume2024 from '../assets/images/german2costume2024.png';
-
-// ИМПОРТ ИТАЛЬЯНСКИХ КОМПЛЕКТОВ КАРТИНОК
-import italysbor2026 from '../assets/images/italysbor2026.png';
-import italy2sbor2026 from '../assets/images/italy2sbor2026.png';
-import italy2026 from '../assets/images/italy2026.png';
-import italy2026_2 from '../assets/images/italy20262.png';
-import italyspets2025 from '../assets/images/italyspets2025.png';
-import italy2spets2025 from '../assets/images/italy2spets2025.png';
-import italyvratar from '../assets/images/italyvratar.png';
-import italy2vratar from '../assets/images/italy2vratar.png';
-import italyvetrovka2024 from '../assets/images/italyvetrovka2024.png';
-import italy2vetrovka2024 from '../assets/images/italy2vetrovka2024.png';
-
-// ИМПОРТ АНГЛИЙСКИХ КОМПЛЕКТОВ КАРТИНОК
-import englandhome2026 from '../assets/images/englandhome2026.png';
-import england2home2026 from '../assets/images/england2home2026.png';
-import englandguest2026 from '../assets/images/englandguest2026.png';
-import england2guest2026 from '../assets/images/england2guest2026.png';
-import englandhomecorto from '../assets/images/englandhomecorto.png';
-import englandhomecorto2 from '../assets/images/englandhomecorto2.png';
-import englandcorto2025 from '../assets/images/englandcorto2025.png';
-import england2corto2025 from '../assets/images/england2corto2025.png';
-import englandspecial from '../assets/images/englandspecial.png';
-import england2special from '../assets/images/england2special.png';
-import englandcostume from '../assets/images/englandcostume.png';
-import england2costume from '../assets/images/england2costume.png';
-
-// ИМПОРТ РОССИЙСКИХ КАРТИНОК
-import russiaussr from '../assets/images/russiaussr.png';
-import russiaussr2 from '../assets/images/russiaussr2.png';
 
 function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
    // Состояния для формы добавления нового товара модератором
@@ -61,7 +9,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
   const [newCountry, setNewCountry] = useState('');
   const [newClub, setNewClub] = useState('');
   const [newPrice, setNewPrice] = useState('');
-  const [newImage, setNewImage] = useState('spainfuria2026.png'); // картинка по умолчанию
+  const [newImage, setNewImage] = useState('spainfuria2026.png');
     const handleCreateProduct = async (e) => {
     e.preventDefault();
     if (!newTitle || !newPrice) return alert('Заполните название и цену!');
@@ -128,11 +76,11 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
   const [editPrice, setEditPrice] = useState('');
   const [editDesc, setEditDescription] = useState('');
 
-  const spainKits = [[spainfuria2026, spain2furia2026], [spaindelafuente, spaindelafuente2], [spainflores, spainflores2], [spainrukav, spainrukav2], [spainvratar, spainvratar2]];
-  const germanKits = [[germanhome2026, german2home2026], [germangost2026, german2gost2026], [germangost2022, german2gost2022], [germantrenirovka26, german2trenirovka26], [germancostume2024, german2costume2024]];
-  const italyKits = [[italysbor2026, italy2sbor2026], [italy2026, italy2026_2], [italyspets2025, italy2spets2025], [italyvratar, italy2vratar], [italyvetrovka2024, italy2vetrovka2024]];
-  const englandKits = [[englandhome2026, england2home2026], [englandguest2026, england2guest2026], [englandhomecorto, englandhomecorto2], [englandcorto2025, england2corto2025], [englandspecial, england2special], [englandcostume, england2costume]];
-  const russiaKits = [[russiaussr, russiaussr2]];
+  const spainKits = [['spainfuria2026.png', 'spain2furia2026.png'], ['spaindelafuente.png', 'spaindelafuente2.png'], ['spainflores.png', 'spainflores2.png']];
+  const germanKits = [['germanhome2026.png', 'german2home2026.png'], ['germangost2026.png', 'german2gost2026.png']];
+  const italyKits = [['italysbor2026.png', 'italy2sbor2026.png'], ['italy2026.png', 'italy2026_2.png'], ['italyspets2025.png', 'italy2spets2025.png']];
+  const englandKits = [['englandhome2026.png', 'england2home2026.png'], ['englandguest2026.png', 'england2guest2026.png']];
+  const russiaKits = [['russiaussr.png', 'russiaussr2.png']];
 
   useEffect(() => {
     const mockDb = [];
@@ -368,8 +316,13 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                   {p.badge && <span className="product-card-badge">{p.badge}</span>}
                   <button className={`product-card-fav-btn ${isFav ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(p); }}>❤</button>
                   {currentUser.role === 'moderator' && ( <button className="admin-delete-product-btn" onClick={(e) => handleDeleteProduct(e, p.id)}>✕</button> )}
-                  <img src={p.image} alt={p.title} className="product-item-img main-img" />
-                  <img src={p.imageHover} alt={p.title} className="product-item-img hover-img" />
+                  <img 
+                    src={`/src/assets/images/${p.image || 'spainfuria2026.png'}`} 
+                    className="product-item-img" 
+                    alt={p.title} 
+                    onMouseEnter={(e) => e.currentTarget.src = `/src/assets/images/${p.image_hover || p.imageHover || p.image || 'spain2furia2026.png'}`} 
+                    onMouseLeave={(e) => e.currentTarget.src = `/src/assets/images/${p.image || 'spainfuria2026.png'}`} 
+                  />
                 </div>
                 <div className="product-card-info-content">
                   <span className="product-card-category-tag">{p.mainCategory} {p.club ? `› ${p.club}` : p.country ? `› ${p.country}` : ''}</span>
@@ -388,7 +341,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
           <div className="product-info-modal-card" onClick={e => e.stopPropagation()}>
             <button className="modal-close-btn" onClick={() => setSelectedProduct(null)}>✕</button>
             <div className="modal-product-layout">
-              <div className="modal-product-media"><img src={selectedProduct.image} alt={selectedProduct.title} className="modal-main-img" /></div>
+              <div className="modal-product-media"><img src={`/src/assets/images/${selectedProduct.image}`} alt={selectedProduct.title} className="modal-main-img" onMouseEnter={(e) => e.currentTarget.src = `/src/assets/images/${selectedProduct.image_hover || selectedProduct.imageHover || selectedProduct.image}`} onMouseLeave={(e) => e.currentTarget.src = `/src/assets/images/${selectedProduct.image}`} /></div>
               <div className="modal-product-details">
                 {currentUser.role === 'moderator' ? (
                   <div className="admin-editor-panel-form" style={{display:'flex', flexDirection:'column', gap:'10px', width:'100%'}}>
