@@ -10,9 +10,12 @@ python = "^3.12"
 fastapi = "^0.111.1"
 uvicorn = "^0.30.1"
 sqlalchemy = "^2.0.31"
-asyncpg = "^0.29.0"  # Добавили асинхронный драйвер СУБД вместо старого psycopg2
+asyncpg = "^0.29.0" 
 pydantic = "^2.7.4"
-pydantic-settings = "^2.3.4"  # Добавили для продвинутых настроек BaseSettings
+pydantic-settings = "^2.3.4" 
+alembic = "^1.19.1"
+python-dotenv = "^1.2.3"
+psycopg2-binary = "^2.9.12"
 
 [build-system]
 requires = ["poetry-core"]

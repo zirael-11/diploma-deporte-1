@@ -322,6 +322,10 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                     alt={p.title} 
                     onMouseEnter={(e) => e.currentTarget.src = `/src/assets/images/${p.image_hover || p.imageHover || p.image || 'spain2furia2026.png'}`} 
                     onMouseLeave={(e) => e.currentTarget.src = `/src/assets/images/${p.image || 'spainfuria2026.png'}`} 
+                    onError={(e) => { 
+                      // Если ховер-картинка отсутствует в assets, принудительно возвращаем лицо, чтобы вёрстка не ломалась
+                      e.currentTarget.src = `/src/assets/images/${p.image || 'spainfuria2026.png'}`; 
+                    }}
                   />
                 </div>
                 <div className="product-card-info-content">

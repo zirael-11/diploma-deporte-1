@@ -76,7 +76,7 @@ function Profile({ currentUser, setCurrentUser }) {
     setAuthScreen('register');
   };
 
-  // ЭКРАН 1: РЕГИСТРАЦИЯ (ОДИН В ОДИН ПО ВАШЕМУ СКРИНШОТУ)
+  // ЭКРАН 1: РЕГИСТРАЦИЯ
   if (currentUser.name === 'Гость' && authScreen === 'register') {
     return (
       <div className="premium-auth-container">
@@ -134,7 +134,7 @@ function Profile({ currentUser, setCurrentUser }) {
     );
   }
 
-  // ЭКРАН 2: АВТОРИЗАЦИЯ (В ТОМ ЖЕ МИНИМАЛИСТИЧНОМ СТИЛЕ)
+  // ЭКРАН 2: АВТОРИЗАЦИЯ
   if (currentUser.name === 'Гость' && authScreen === 'login') {
     return (
       <div className="premium-auth-container">

@@ -34,8 +34,8 @@ function Cart({ cartItems = [], setCartItems, setSelectedProduct }) {
       {cartItems.length === 0 ? (
         <div className="empty-cart-message" style={{ textAlign: 'center', padding: '60px 0', opacity: 0.5 }}>
           <span style={{ fontSize: '48px', display: 'block', marginBottom: '20px' }}>🛒</span>
-          <h3>Ваша корзина пуста</h3>
-          <p>Перейдите в каталог, чтобы добавить спортивные товары на витрину.</p>
+          <h3>Ваша корзина пуста,чувак</h3>
+          <p>Перейдите в каталог, чтобы добавить спортивные товары сюды.</p>
         </div>
       ) : (
         <div className="cart-page-layout" style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
