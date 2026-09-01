@@ -36,6 +36,7 @@ import Catalog from './pages/catalog';
 import Profile from './pages/profile';
 import Favorites from './pages/favorites';
 import Cart from './pages/cart';
+import ProductPage from './pages/ProductPage';
 
 function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -204,6 +205,7 @@ function App() {
           <Route path="/profile" element={<Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
           <Route path="/favorites" element={<Favorites favorites={favorites} toggleFavorite={toggleFavorite} addToCart={addToCart} />} />
           <Route path="/cart" element={<Cart cartItems={cartItems} setCartItems={setCartItems} />} />
+          <Route path="/product/:id" element={<ProductPage addToCart={addToCart} />} />
         </Routes>
       </div>
     </div>

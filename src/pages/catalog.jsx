@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-
+import { Link } from 'react-router-dom';
 
 function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
    // Состояния для формы добавления нового товара модератором
@@ -391,7 +391,27 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                       <span className="modal-category-tag">{selectedProduct.mainCategory}</span>
                       <button className={`modal-fav-inline-btn ${favorites.some(f => f.id === selectedProduct.id) ? 'active' : ''}`} onClick={() => toggleFavorite(selectedProduct)}>❤</button>
                     </div>
-                    <h3 className="modal-product-title">{selectedProduct.title}</h3>
+              <Link 
+                to={`/product/${selectedProduct.id}`} 
+                state={{ product: selectedProduct }}
+                onClick={() => setSelectedProduct(null)} 
+                style={{ textDecoration: 'none', color: '#fff' }}
+              >
+                <h3 
+                className="modal-product-title" 
+                style={{ 
+                  cursor: 'pointer', 
+                  transition: '0.2s ease',
+                  color: window.modalTitleHover ? '#e67e22' : '#fff',
+                  textDecoration: window.modalTitleHover ? 'underline' : 'none'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#e67e22'; e.currentTarget.style.textDecoration = 'underline'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.textDecoration = 'none'; }}
+              >
+                {selectedProduct.title} ➔
+              </h3>
+
+              </Link>
                     <div className="modal-price-box"><span className="modal-current-price">{selectedProduct.price}</span>{selectedProduct.oldPrice && <span className="modal-old-price" style={{marginLeft:'15px', opacity:0.35, textDecoration:'line-through'}}>{selectedProduct.oldPrice}</span>}</div>
                     <div className="modal-description-block"><h5>ОПИСАНИЕ МОДЕЛИ</h5><p>{selectedProduct.description}</p>
                                           <ul>
