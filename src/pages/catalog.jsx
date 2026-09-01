@@ -75,6 +75,8 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
   const [editTitle, setEditTitle] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [editDesc, setEditDescription] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   const spainKits = [['spainfuria2026.png', 'spain2furia2026.png'], ['spaindelafuente.png', 'spaindelafuente2.png'], ['spainflores.png', 'spainflores2.png']];
   const germanKits = [['germanhome2026.png', 'german2home2026.png'], ['germangost2026.png', 'german2gost2026.png']];
@@ -171,6 +173,10 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
   const handleResetFilters = () => { 
     setSelectedMainCat('Все'); setSelectedCountries([]); setSelectedClubs([]); setSelectedTypes([]); setSelectedYears([]); setSelectedSizes([]); setSelectedPriceRange(0); 
   };
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   return (
     <div className="catalog-page-container flex-layout-catalog">
@@ -308,7 +314,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
           </form>
         )}
         <div className="products-grid-container grid-4-columns">
-          {filteredProducts.map(p => {
+          {currentItems.map(p => {  
             const isFav = favorites.some(f => f.id === p.id);
             return (
               <div key={p.id} className="product-item-card" onClick={() => handleOpenEditModal(p)}>
@@ -337,6 +343,30 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
               </div>
             );
           })}
+          {/* КНОПКИ ПЕРЕКЛЮЧЕНИЯ СТРАНИЦ ПО ТРЕБОВАНИЮ ДИПЛОМА */}
+            {totalPages > 1 && (
+              <div className="pagination-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', margin: '40px auto 0 auto', width: '100%', gridColumn: '1 / -1' }}>
+                <button 
+                  type="button"
+                  onClick={() => { setCurrentPage(prev => Math.max(prev - 1, 1)); window.scrollTo(0, 0); }}
+                  disabled={currentPage === 1}
+                  style={{ padding: '10px 20px', backgroundColor: currentPage === 1 ? '#222' : '#e67e22', color: '#fff', border: 'none', borderRadius: '6px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                >
+                  Назад
+                </button>
+                <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>
+                  Страница {currentPage} из {totalPages}
+                </span>
+                <button 
+                  type="button"
+                  onClick={() => { setCurrentPage(prev => Math.min(prev + 1, totalPages)); window.scrollTo(0, 0); }}
+                  disabled={currentPage === totalPages}
+                  style={{ padding: '10px 20px', backgroundColor: currentPage === totalPages ? '#222' : '#e67e22', color: '#fff', border: 'none', borderRadius: '6px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                >
+                  Вперед
+                </button>
+              </div>
+            )}
         </div>
       </div>
 
