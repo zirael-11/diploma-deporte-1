@@ -27,8 +27,8 @@ class Product(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,
-        server_default=func.gen_random_uuid()
-    )
+        server_default=func.gen_random_uuid() # База данных сама генерирует ключ!
+)
     
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     main_category: Mapped[str] = mapped_column(String(100), nullable=False)

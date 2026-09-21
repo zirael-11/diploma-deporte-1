@@ -1,27 +1,27 @@
 services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
- # 1. СЕРВИС ОБРАТНОГО ПРОКСИ-СЕРВЕРА NGINX (WEB-SERVER)
+  # # 1. СЕРВИС ОБРАТНОГО ПРОКСИ-СЕРВЕРА NGINX (WEB-SERVER)
   web-server:
-    image: nginx:stable-alpine3.23
+    image: nginx:latest
     container_name: deporte-web-server
     ports:
       - "80:80"
     volumes:
-      - ./backend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       # ПРОБРАСЫВАЕМ ПАПКУ С КАРТИНКАМИ ВНУТРЬ КОНТЕЙНЕРА NGINX:
       - ./backend/nginx/images:/usr/share/nginx/html/images:ro
     networks:
       - deporte_network
     depends_on:
-      - backend
+      - database
 
- # 2. СЕРВИС БАЗЫ ДАННЫХ POSTGRESQL (DATABASE)
+  # # 2. СЕРВИС БАЗЫ ДАННЫХ POSTGRESQL (DATABASE)
   database:
     image: postgres:14-alpine3.23
     container_name: deporte-database
     shm_size: 128mb
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # СТРОГО ПО МАКЕТУ ПРЕПОДАВАТЕЛЯ: Авто-запуск SQL-скрипта при старте базы
+      #Авто-запуск SQL-скрипта при старте базы
       - ./backend/01-deporte.sql:/docker-entrypoint-initdb.d/01-deporte.sql:ro
     environment:
       - POSTGRES_USER=nika
@@ -30,13 +30,13 @@ services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
     networks:
       - deporte_network
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "nika", "-d", "deporte_shop" ]
+      test: ["CMD", "pg_isready", "-U", "nika", "-d", "deporte_shop"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-  # 3. СЕРВИС FASTAPI БЭКЕНДА (BACKEND)
+  # # 3. СЕРВИС FASTAPI БЭКЕНДА (BACKEND)
   backend:
     build:
       context: ./backend
@@ -44,8 +44,8 @@ services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
     container_name: deporte-backend
     volumes:
       - ./backend/app:/app/app
-      - ./backend/alembic.ini:/app/alembic.ini 
-      - ./backend/migrations:/app/migrations  
+      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/migrations:/app/migrations
     env_file:
       - ./backend/app/.env
     command: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
@@ -54,6 +54,26 @@ services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
     depends_on:
       database:
         condition: service_healthy
+
+  # # 4. АВТОМАТИЧЕСКИЙ ПЕРЕНОС МИГРАЦИЙ Alembic ПРИ СТАРТЕ ПРОЕКТА
+  migrate:
+    build:
+      context: ./backend
+      target: builder # Использует наш оптимизированный builder-этап из Dockerfile
+    container_name: deporte-migrations
+    environment:
+      - POSTGRES_SERVER=database
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=deporte_shop
+      - POSTGRES_USER=nika
+      - POSTGRES_PASSWORD=admin
+    # Ждем, пока контейнер базы данных полностью поднимется и начнет принимать подключения
+    depends_on:
+      - database
+    # Команда автоматически накатывает все миграции до самой последней версии
+    command: poetry run alembic upgrade head
+    networks:
+      - deporte_network
 
 volumes:
   postgres_data:

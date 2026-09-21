@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function Cart({ cartItems = [], setCartItems, setSelectedProduct }) {
   // Функция для удаления конкретного элемента из корзины
@@ -106,10 +107,14 @@ function Cart({ cartItems = [], setCartItems, setSelectedProduct }) {
               <span style={{ fontSize: '16px', fontWeight: 700 }}>Общая сумма:</span>
               <span style={{ fontSize: '24px', fontWeight: 900, color: '#2ecc71' }}>{totalPriceStr}</span>
             </div>
-
-            <button className="modal-action-buy-btn" style={{ width: '100%', padding: '16px', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', letterSpacing: '1px', marginTop: '10px' }}>
-              ОФОРМИТЬ ЗАКАЗ
-            </button>
+            <Link to="/checkout" style={{ textDecoration: 'none', width: '100%', display: 'block' }}>
+              <button 
+                className="modal-action-buy-btn" 
+                style={{ width: '100%', padding: '16px', backgroundColor: '#e67e22', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: '0.3s' }}
+              >
+                ОФОРМИТЬ ЗАКАЗ ➔
+              </button>
+            </Link>
           </div>
 
         </div>

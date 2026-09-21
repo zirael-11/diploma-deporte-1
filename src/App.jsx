@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import Checkout from './pages/Checkout';
 import frame1 from './assets/images/frame1.png';
 import frame2 from './assets/images/frame2.png';
 import frame3 from './assets/images/frame3.png';
@@ -37,6 +38,8 @@ import Profile from './pages/profile';
 import Favorites from './pages/favorites';
 import Cart from './pages/cart';
 import ProductPage from './pages/ProductPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -71,6 +74,13 @@ function App() {
       return [...prevItems, { ...product, size: selectedSize, quantity: 1 }];
     });
     setToast({ isVisible: true, message: `Товар добавлен в корзину! Размер: ${selectedSize}` });
+  };
+  const clearCart = () => {
+    if (typeof setCartItems === 'function') {
+      setCartItems([]); // Если стейт корзины называется так
+    } else if (typeof setCart === 'function') {
+      setCart([]); // На случай, если стейт называется просто setCart
+    }
   };
 
   useEffect(() => {
@@ -206,6 +216,14 @@ function App() {
           <Route path="/favorites" element={<Favorites favorites={favorites} toggleFavorite={toggleFavorite} addToCart={addToCart} />} />
           <Route path="/cart" element={<Cart cartItems={cartItems} setCartItems={setCartItems} />} />
           <Route path="/product/:id" element={<ProductPage addToCart={addToCart} />} />
+                  <Route 
+          path="/checkout" 
+          element={<Checkout cartItems={cartItems} clearCart={clearCart} currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
+          <Route path="/profile" element={currentUser.name === 'Гость' ? <Navigate to="/login" replace /> : <Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
+        {/* ПУТИ ДЛЯ СТРАНИЦ АВТОРИЗАЦИИ И РЕГИСТРАЦИИ */}
+          <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
+          <Route path="/register" element={<Register />} />
+          
         </Routes>
       </div>
     </div>
