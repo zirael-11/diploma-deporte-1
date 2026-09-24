@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends, Response
 # Импортируем схемы запросов и ответов
 from app.schemas.user import UserCreateRequest, UserLoginRequest, UserResponse
-# Импортируем наши фабрики зависимостей
+# Импортируем  фабрики зависимостей
 from app.services.services import get_auth_service, get_session_service
 from app.services.auth_service import AuthService
 from app.services.session_service import SessionService

@@ -1,12 +1,14 @@
 from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
 from typing import List, Optional
 import uuid
 import app.models as models
 from app.models import UserRole
+from sqlalchemy import select, delete, text
 from app.core.database import engine, get_async_db
+from app import schemas
+
 
 # ИСПРАВЛЕНО: Импортируем все валидационные схемы из папки schemas по канонам преподавателя
 from app.schemas.user import UserCreateRequest, UserLogin, UserResponse, ProductCreate
@@ -24,6 +26,9 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup():
     async with engine.begin() as conn:
+        # Принудительно создаем схему catalog, чтобы SQLAlchemy не падала с ошибкой 500!
+        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS catalog;"))
+        # Спокойно создаем таблицы со всеми колонками (включая created_at)
         await conn.run_sync(models.Base.metadata.create_all)
 
 
@@ -35,9 +40,11 @@ async def get_products(db: AsyncSession = Depends(get_async_db)):
     return result.scalars().all()
 
 @app.post("/products", status_code=status.HTTP_201_CREATED)
-async def create_product(product_data: ProductCreate, db: AsyncSession = Depends(get_async_db)):
+async def create_product(product_data: schemas.ProductCreate, db: AsyncSession = Depends(get_async_db)):
     try:
+        # 🎯 СОЗДАЕМ ОБЪЕКТ ТОВАРА И СРАЗУ ГЕНЕРИРУЕМ УНИКАЛЬНЫЙ СТРОКОВЫЙ UUID
         new_product = models.Product(
+            id=str(uuid.uuid4()),
             title=product_data.title,
             main_category=product_data.main_category,
             country=product_data.country,
@@ -50,10 +57,13 @@ async def create_product(product_data: ProductCreate, db: AsyncSession = Depends
             image=product_data.image,
             image_hover=product_data.image_hover
         )
+        
         db.add(new_product)
         await db.commit()
         await db.refresh(new_product)
+        
         return {"status": "success", "message": "Товар успешно добавлен в PostgreSQL", "product_id": new_product.id}
+        
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка базы данных: {str(e)}")

@@ -1,8 +1,8 @@
 from app.services.user_service import UserService
-# Импортируем твои Pydantic-схемы для пользователей
+# Импортируем Pydantic-схемы для пользователей
 from app.schemas.user import UserCreateRequest, UserLoginRequest
 from app.services.exceptions import AuthenticationError
-from pwdlib import PasswordHash # Подключаем pwdlib со скриншота №3
+from pwdlib import PasswordHash # Подключаем pwdlib
 
 pwd_context = PasswordHash.recommended()
 
@@ -17,7 +17,7 @@ class AuthService:
         return pwd_context.hash(password)
 
     async def create_user(self, user_data: UserCreateRequest):
-        # Хэшируем сырой пароль перед записью в PostgreSQL!
+        # Хэшируем сырой пароль перед записью в Postgr
         hashed_password = self.hash_password(user_data.password)
         # Передаем данные в UserService, подставляя зашифрованный пароль
         return await self.user_service.create(user_data, hashed_password)

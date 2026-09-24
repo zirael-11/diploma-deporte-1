@@ -1,4 +1,4 @@
-services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
+services: 
   # # 1. СЕРВИС ОБРАТНОГО ПРОКСИ-СЕРВЕРА NGINX (WEB-SERVER)
   web-server:
     image: nginx:latest
@@ -42,18 +42,22 @@ services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
       context: ./backend
       target: runtime
     container_name: deporte-backend
+    ports:
+      - "8000:8000"
     volumes:
       - ./backend/app:/app/app
       - ./backend/alembic.ini:/app/alembic.ini
       - ./backend/migrations:/app/migrations
-    env_file:
-      - ./backend/app/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://nika:admin@deporte-database:5432/deporte_shop
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     command: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
     networks:
       - deporte_network
     depends_on:
-      database:
-        condition: service_healthy
+      - database
+      - migrate
 
   # # 4. АВТОМАТИЧЕСКИЙ ПЕРЕНОС МИГРАЦИЙ Alembic ПРИ СТАРТЕ ПРОЕКТА
   migrate:
@@ -67,6 +71,10 @@ services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
       - POSTGRES_DB=deporte_shop
       - POSTGRES_USER=nika
       - POSTGRES_PASSWORD=admin
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/migrations:/app/migrations
     # Ждем, пока контейнер базы данных полностью поднимется и начнет принимать подключения
     depends_on:
       - database
@@ -74,9 +82,25 @@ services: # СТРОГО ДОБАВИЛИ ГЛАВНЫЙ БЛОК SERVICES
     command: poetry run alembic upgrade head
     networks:
       - deporte_network
+ # # 5. ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ КЭШ REDIS ДЛЯ ХРАНЕНИЯ СЕССИЙ АВТОРИЗАЦИИ
+  redis:
+    image: redis:alpine3.23
+    container_name: deporte-redis
+    networks:
+      - deporte_network
+    volumes:
+      - redis_data:/data
+    command: "redis-server --appendonly yes"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   deporte_network:

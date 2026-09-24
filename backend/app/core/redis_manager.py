@@ -20,6 +20,6 @@ class RedisManager:
 # Создаем один глобальный менеджер для всего бэкенда диплома
 redis_manager = RedisManager()
 
-# Та самая функция-генератор, которую мы указали вDepends() наших сервисов!
+# Та самая функция-генератор, которую мы указали вDepends() наших сервисов
 async def get_redis():
     return redis_manager.get_client()

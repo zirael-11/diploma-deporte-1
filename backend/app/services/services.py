@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database import get_db          # Твой генератор сессий PostgreSQL
-from app.core.redis_manager import get_redis  # Функция получения клиента Redis
+from app.core.database import get_db          #генератор сессий PostgreSQL
+from app.core.redis_manager import get_redis  #Функция получения клиента Redis
 from app.services.user_service import UserService
 from app.services.auth_service import AuthService
 from app.services.session_service import SessionService

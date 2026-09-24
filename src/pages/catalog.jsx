@@ -38,7 +38,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
         body: JSON.stringify(productPayload)
       });
       if (response.ok) {
-        alert('🎉 Товар успешно добавлен в PostgreSQL через Nginx!');
+        alert('Товар успешно добавлен в PostgreSQL через Nginx!');
         // Перезагружаем страницу, чтобы обновить список из БД
         window.location.reload();
       }
@@ -343,7 +343,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
               </div>
             );
           })}
-          {/* КНОПКИ ПЕРЕКЛЮЧЕНИЯ СТРАНИЦ ПО ТРЕБОВАНИЮ ДИПЛОМА */}
+          {/* КНОПКИ ПЕРЕКЛЮЧЕНИЯ СТРАНИЦ*/}
             {totalPages > 1 && (
               <div className="pagination-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', margin: '40px auto 0 auto', width: '100%', gridColumn: '1 / -1' }}>
                 <button 

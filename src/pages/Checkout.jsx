@@ -29,6 +29,17 @@ function Checkout({ cartItems = [], clearCart, currentUser, setCurrentUser }) {
     }, 0);
   };
 
+// ФУНКЦИЯ ДЛЯ АВТОМАТИЧЕСКОГО ПЕРЕВОДА РУССКИХ БУКВ В АНГЛИЙСКИЙ ТРАНСЛИТ
+  const translit = (str) => {
+    const ru = {
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh', 
+      'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 
+      'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 
+      'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+    };
+    return str.toLowerCase().split('').map(char => ru[char] || char).join('');
+  };
+
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     if (!fullName || !phone || !address || (!email && currentUser.name === 'Гость')) {
@@ -38,39 +49,44 @@ function Checkout({ cartItems = [], clearCart, currentUser, setCurrentUser }) {
     setLoading(true);
 
     try {
-      // 🚀 ТРЕМБОВАНИЕ: ЕСЛИ ЗАКАЗ ДЕЛАЕТ ГОСТЬ — АВТОМАТИЧЕСКИ СОЗДАЕМ ЕМУ УЧЕТНУЮ ЗАПИСЬ В POSTGRESQL!
+      // ЕСЛИ ЗАКАЗ ДЕЛАЕТ ГОСТЬ,АВТОМАТИЧЕСКИ СОЗДАЕМ ЕМУ УЧЕТНУЮ ЗАПИСЬ В POSTGRESQL
       if (currentUser.name === 'Гость') {
+        // Переводим ФИО в безопасный английский логин для схемы бэкенда
+        const safeLogin = translit(fullName).replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+
         const response = await fetch('http://localhost/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            login: fullName.replace(/\s+/g, '_'), // Делаем валидный логин без пробелов
+            login: safeLogin,
             email: email,
-            password: phone.replace(/[^\d]/g, '') // В качестве временного пароля берем цифры телефона!
+            password: phone.replace(/[^\d]/g, '') // Временный пароль — цифры телефона
           })
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          // Автоматически авторизуем его на фронтенде
-          setCurrentUser({
-            name: fullName,
-            email: email,
-            role: 'user'
-          });
-          console.log("Скрытый аккаунт для гостя успешно создан в базе данных!");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Ошибка регистрации гостя');
         }
+
+        const data = await response.json();
+        // Автоматически авторизуем пользователя на фронтенде
+        setCurrentUser({
+          name: fullName,
+          email: email,
+          role: 'user'
+        });
       }
 
       // Генерируем финальный номер заказа маркетплейса
       const randomNum = Math.floor(1000 + Math.random() * 9000);
       setOrderNumber(`DEPORTE-${randomNum}`);
       setIsSubmitted(true);
-      clearCart(); // Очищаем премиальную корзину
+      clearCart();
 
     } catch (error) {
       console.error("Ошибка при авто-регистрации заказа:", error);
-      alert("Произошла ошибка при отправке данных заказа на бэкенд.");
+      alert(`Ошибка: ${error.message || 'Не удалось отправить данные заказа.'}`);
     } finally {
       setLoading(false);
     }

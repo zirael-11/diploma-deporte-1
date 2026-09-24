@@ -11,11 +11,11 @@ class UserService:
         self.database = database
 
     async def create(self, user_data: UserCreateRequest, hashed_password: str) -> User:
-        # Проверяем уникальность email
+        #уникальность email
         if await self.get_by_email(user_data.email):
             raise DuplicateUserError("email", "Этот Email уже зарегистрирован в системе")
             
-        # Проверяем уникальность логина
+        #уникальность логина
         if await self.get_by_name(user_data.login):
             raise DuplicateUserError("login", "Этот логин уже занят другим футболистом")
 

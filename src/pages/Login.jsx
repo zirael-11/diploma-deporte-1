@@ -12,11 +12,11 @@ function Login({ setCurrentUser }) {
     setError('');
 
     if (!email || !password) {
-      return setError('Пожалуйста, заполните все поля!');
+      return setError('Пожалуйста, заполните все поля, а то не круто чел!');
     }
 
     try {
-      // Стучимся на наш FastAPI бэкенд через Nginx прокси
+      // Стучимся на FastAPI бэкенд через Nginx прокси
       const response = await fetch('http://localhost/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -29,11 +29,11 @@ function Login({ setCurrentUser }) {
         throw new Error(data.detail || 'Неверный email или пароль');
       }
 
-      // Если бэкенд и Redis одобрили сессию — сохраняем пользователя
+      // Если бэкенд и Redis одобрили сессию,сохраняем пользователя
       alert('Успешный вход в систему!');
       setCurrentUser({
         name: data.user.username,
-        role: 'user', // Или подставляем data.user.role, если добавишь модератора
+        role: 'user', // Или подставляем data.user.role, если добавлю модератора (пиздец)
         email: data.user.email
       });
       

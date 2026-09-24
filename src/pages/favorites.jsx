@@ -91,7 +91,7 @@ function Favorites({ favorites = [], toggleFavorite, addToCart }) {
                     <h3 className="modal-product-title" style={{ textAlign: 'left', margin: '4px 0 12px 0' }}>{selectedProduct.title}</h3>
                   </div>
 
-                  {/* ИСПРАВЛЕНО: Кнопка-сердечко аккуратно сдвинута к цене, крестик закрытия теперь свободен */}
+                  {/* ИСПРАВЛЕНО: Кнопка-сердечко сдвинута к цене*/}
                   <div className="modal-price-box" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span className="modal-current-price">{selectedProduct.price}</span>
