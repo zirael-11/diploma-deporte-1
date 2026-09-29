@@ -27,7 +27,7 @@ async def seed_products():
     # 2. Создаем фабрику асинхронных сессий
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     
-    print("🚀 Запуск масштабной генерации 120 товаров для DEPORTE...")
+    print("Запуск масштабной генерации 120 товаров для DEPORTE...")
     
     async with async_session() as session:
         for i in range(1, 121):
@@ -64,7 +64,7 @@ async def seed_products():
             session.add(product)
         
         await session.commit()
-    print("🟢 ПОЛНЫЙ УСПЕХ! В PostgreSQL успешно записано 120 товаров с клубами и сборными!")
+    print(" В PostgreSQL успешно записано 120 товаров с клубами и сборными!")
 
 if __name__ == "__main__":
     asyncio.run(seed_products())

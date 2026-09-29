@@ -3,7 +3,7 @@ import enum
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from sqlalchemy import String, Numeric, DateTime, func, CheckConstraint
+from sqlalchemy import String, Numeric, DateTime, func, CheckConstraint,ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
@@ -77,3 +77,19 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
+    __table_args__ = {"schema": "catalog"}  # Складываем в схему каталога
+
+    # Используем Mapped[uuid.UUID]
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Внешние ключи связываем с типами UUID твоих таблиц пользователей и товаров
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("catalog.users.id", ondelete="CASCADE"), nullable=False)
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("catalog.products.id", ondelete="CASCADE"), nullable=False)
+    
+    # Обычные поля для количества и размера джерси маркетплейса DEPORTE
+    quantity: Mapped[int] = mapped_column(server_default="1", default=1, nullable=False)
+    selected_size: Mapped[str] = mapped_column(String(10), server_default="M", default="M", nullable=False)

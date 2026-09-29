@@ -830,23 +830,25 @@ body {
 }
 
 /*Карточка модального окна компактная и фиксированная */
+/* Карточка модального окна компактная и фиксированная (Тёмная тема по умолчанию) */
 .product-info-modal-card {
-  background-color: var(--bg-navbar) !important; 
-  color: var(--text-main) !important;
-  border: 1px solid var(--border-color);
-  width: 90%;
-  max-width: 850px;
-  height: 550px; /* Сделали окно аккуратнее по высоте */
-  border-radius: 12px;
-  padding: 30px;
-  position: relative;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background-color: #141414 !important; /* 🔥 Жёстко закрашиваем в плотный тёмный цвет! */
+    color: #ffffff !important;
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 850px;
+    height: 550px;
+    border-radius: 12px;
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 /* Принудительная подстройка для светлой темы */
-.light-theme .product-info-modal-card {
-  background-color: #ffffff !important;
-  color: #111111 !important;
+.light-theme .product-info-modal-card,
+.light .product-info-modal-card {
+    background-color: #ffffff !important;
+    color: #111111 !important;
 }
 
 .modal-close-btn {
@@ -871,14 +873,14 @@ body {
 
 /*Компактный блок для левой картинки */
 .modal-product-media {
-  background-color: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  height: 100%;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    height: fit-content; /* 🎯 ВМЕСТО 100% ПИШЕМ FIT-CONTENT, ЧТОБЫ РАМКА ОБНЯЛА ФОТО! */
 }
 
 .light-theme .modal-product-media {
@@ -1612,11 +1614,15 @@ body {
 
 /* ================= СТИЛИ МИНИМАЛИСТИЧНОЙ АВТОРИЗАЦИИ С УЧЕТОМ ТЕМ ================= */
 .premium-auth-container {
-  max-width: 420px;
-  width: 100%;
-  margin: 120px auto 60px auto;
-  padding: 0 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #141414 !important; /* Плотный графитовый цвет в темной теме */
+    color: #ffffff !important;
+    border: 1px solid #262626 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+    padding: 35px 30px !important; /* Ровные отступы вокруг полей */
+    max-width: 420px !important;
+    margin: 0 auto 60px auto !important; /* Центрируем и убираем лишнее растяжение */
+    height: auto !important; /* Убираем бесконечную длину вниз! */
 }
 
 .premium-auth-title {
@@ -1860,6 +1866,39 @@ body {
   transform: translateY(-1px);
 }
 
+.premium-auth-title {
+    margin-top: 40px !important;
+    margin-bottom: 25px !important;
+    text-align: center !important;
+    color: var(--text-main) !important;
+    transition: color 0.3s ease;
+}
+
+/* 🎯 ПРИНУДИТЕЛЬНАЯ ПОДСТРОЙКА ДЛЯ СВЕТЛОЙ ТЕМЫ САЙТА */
+.light-theme .premium-auth-container,
+.light .premium-auth-container {
+    background-color: #ffffff !important; /* Белоснежная карточка */
+    border: 1px solid #e0e0e0 !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08) !important;
+    color: #111111 !important;
+}
+
+/* Корректируем заголовок «Регистрация» в светлой теме */
+.light-theme .premium-auth-title,
+.light .premium-auth-title {
+    color: #111111 !important; /* Четкий черный текст названия */
+}
+
+/* Корректируем нижний текст со ссылкой переключения окон */
+.light-theme .premium-auth-footer-text,
+.light .premium-auth-footer-text {
+    color: #555555 !important;
+}
+
+.light-theme .premium-input-group label,
+.light .premium-input-group label {
+    color: #333333 !important; /* Темно-серые аккуратные буквы */
+}
 
 
 /* ================= СТИЛИ ИМЕНИ ПОЛЬЗОВАТЕЛЯ В ШАПКЕ САЙТА ================= */

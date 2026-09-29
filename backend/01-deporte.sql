@@ -34,3 +34,13 @@ VALUES
 ('3', 'Домашняя форма сборной Италии (2024)', 'Форма сборных', 'Италия', NULL, '2024', 'Домашняя', 4900.00, '4 900 ₽', 'Официальная экипировка сборной Италии.', 'italysbor2026.png', 'italy2sbor2026.png', NOW(), NOW()),
 ('4', 'Домашняя форма сборной Англии (2024)', 'Форма сборных', 'Англия', NULL, '2024', 'Домашняя', 4900.00, '4 900 ₽', 'Официальная экипировка сборной Англии.', 'englandhome2026.png', 'england2home2026.png', NOW(), NOW()),
 ('5', 'Специальная форма сборной России (2024)', 'Форма сборных', 'Россия', NULL, '2024', 'Специальная', 5700.00, '5 700 ₽', 'Эксклюзивный комплект сборной России.', 'russiaussr.png', 'russiaussr2.png', NOW(), NOW());
+
+CREATE TABLE IF NOT EXISTS catalog.cart_items (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    product_id VARCHAR(36) NOT NULL,
+    quantity INTEGER DEFAULT 1 NOT NULL,
+    selected_size VARCHAR(10) DEFAULT 'M' NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES catalog.users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES catalog.products(id) ON DELETE CASCADE
+);

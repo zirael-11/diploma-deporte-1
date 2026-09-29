@@ -1,110 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useSelector } from 'react-redux'; // 🎯 Подключаем чтение из Redux Toolkit
 
 function ProductPage({ addToCart }) {
+  // 🎯 Считываем ID товара из адресной строки браузера (например, "1", "2" или "4")
   const { id } = useParams();
-  const location = useLocation(); // Читаем переданный state из каталога
   
-  // Приоритет №1: Берем готовый объект товара из state (Англия, Германия и т.д.)
-  const [product, setProduct] = useState(location.state?.product || null);
-  const [loading, setLoading] = useState(!location.state?.product);
-  const [selectedSize, setModalSize] = useState('M');
+  // Забираем наш список 120 товаров напрямую из Redux Store
+  const { items: products } = useSelector((state) => state.products);
+  
+  // Находим именно тот товар, ID которого совпадает с текущей страницей
+  const product = products.find(p => p.id === String(id));
 
+  const [selectedSize, setSelectedSize] = useState('M');
   const sizesList = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 
-  // ЖЕСТКО ЗАШИТЫЙ СТАБИЛЬНЫЙ СПИСОК ТОВАРОВ ДЛЯ ДИПЛОМА (БЕЗ ИСЧЕЗНОВЕНИЙ)
-  const backupProducts = [
-    { id: 1, title: "Домашний комплект Spain Furia 2026", main_category: "Форма сборных", price_str: "5 800 ₽", image: "spainfuria2026.png" },
-    { id: 2, title: "Гостевая forma сборной: Германия (2022)", main_category: "Форма сборных", price_str: "6 100 ₽", image: "germangost2026.png" },
-    { id: 3, title: "Домашняя футболка сборной Италии", main_category: "Форма сборных", price_str: "5 900 ₽", image: "italysbor2026.png" },
-    { id: 4, title: "Официальное джерси сборной Англии", main_category: "Форма сборных", price_str: "6 200 ₽", image: "englandhome2026.png" }
-  ];
-
-  useEffect(() => {
-    if (location.state?.product) {
-      setProduct(location.state.product);
-      setLoading(false);
-    } else {
-      setLoading(true);
-      fetch(`http://localhost/api/products/${id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && !data.detail) setProduct(data);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error("Ошибка загрузки товара:", err);
-          const found = backupProducts.find(p => String(p.id) === String(id));
-          if (found) setProduct(found);
-          setLoading(false);
-        });
-    }
-
-    // ДОБАВЛЕНО: Принудительно поднимаем экран наверх при смене товара!
-    window.scrollTo(0, 0);
-
-  }, [id, location.state]);
-
-  if (loading) {
-    return <div style={{ padding: '150px 40px', color: '#fff', textAlign: 'center', fontSize: '20px' }}>Загрузка экипировки...</div>;
+  // Если вдруг товар с таким ID не найден (например, ввели вручную плохой ID)
+  if (!product) {
+    return (
+      <div style={{ padding: '40px', color: '#fff', textAlign: 'center' }}>
+        <h2>Товар не найден</h2>
+        <Link to="/" style={{ color: '#e67e22' }}>Вернуться в каталог</Link>
+      </div>
+    );
   }
 
-  // Умный маппинг полей: проверяем все возможные варианты названий свойств из базы
-  const title = product?.title || product?.name || "Футбольная экипировка";
-  const main_category = product?.main_category || product?.category || "Форма сборных";
-  const price = product?.price_str || product?.price || (product?.price_num ? `${product?.price_num} ₽` : "5 800 ₽");
-  const description = product?.description || "Официальный комплект формы премиального качества. Изготовлен из высокотехнологичных дышащих материалов, обеспечивающих максимальный комфорт.";
-  const image = product?.image || "spainfuria2026.png";
-
-  // Для блока «Похожие модели» всегда берем стабильные 4 карточки
-  const similarProducts = backupProducts;
-
   return (
-    <div className="product-page-wrapper" style={{ padding: '120px 40px', color: '#fff', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="product-page-container" style={{ color: '#fff', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       
-      {/* ХЛЕБНЫЕ КРОШКИ */}
-      <nav style={{ marginBottom: '30px', fontSize: '14px', opacity: 0.5 }}>
-        <Link to="/catalog" style={{ color: '#fff' }}>Каталог</Link> / {main_category} / {title}
-      </nav>
+      {/* Хлебные крошки для навигации */}
+      <div className="breadcrumbs" style={{ fontSize: '13px', opacity: 0.5, marginBottom: '20px' }}>
+        <Link to="/" style={{ color: '#fff', textDecoration: 'none' }}>Каталог</Link> / {product.main_category} / {product.title}
+      </div>
 
-      {/* ГЛАВНЫЙ БЛОК ТОВАРА */}
-      <div style={{ display: 'flex', gap: '50px', backgroundColor: '#111', padding: '40px', borderRadius: '16px', border: '1px solid #222' }}>
+      <div className="product-main-layout" style={{ display: 'flex', gap: '50px', background: '#111', padding: '40px', borderRadius: '16px', border: '1px solid #222' }}>
         
-        {/* Левая колонка: Изображение */}
-        <div style={{ width: '450px', minWidth: '450px' }}>
+        {/* Левая колонка: Крупное изображение товара */}
+        <div className="product-image-side" style={{ flex: 1, display: 'flex', justifyContent: 'center', background: '#1a1a1a', borderRadius: '12px', padding: '20px' }}>
           <img 
-            src={`/src/assets/images/${image}`} 
-            alt={title} 
-            style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }} 
-            onError={(e) => { e.currentTarget.src = '/src/assets/images/spainfuria2026.png'; }}
+            src={`/src/assets/images/${product.image}`} 
+            alt={product.title} 
+            style={{ maxWidth: '100%', maxHeight: '450px', objectFit: 'contain' }} 
           />
         </div>
 
-        {/* Правая колонка: Данные и покупка */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <span style={{ color: '#e67e22', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {main_category}
+        {/* Правая колонка: Текстовая информация, размеры и кнопка */}
+        <div className="product-info-side" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <span style={{ color: '#e67e22', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {product.main_category} {product.club ? `| ${product.club}` : ''}
           </span>
-          <h1 style={{ fontSize: '36px', fontWeight: 900, margin: '10px 0 20px 0' }}>{title}</h1>
           
-          <p style={{ opacity: 0.7, fontSize: '16px', lineHeight: '1.6', marginBottom: '30px' }}>
-            {description}
+          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '700', lineHeight: '1.2' }}>
+            {product.title}
+          </h1>
+
+          <p style={{ color: '#aaa', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
+            {product.description || "Официальный комплект формы премиального качества. Изготовлен из высокотехнологичных дышащих материалов, обеспечивающих максимальный комфорт."}
           </p>
 
-          <div style={{ fontSize: '32px', fontWeight: '900', color: '#2ecc71', marginBottom: '30px' }}>
-            {price}
+          <div style={{ fontSize: '14px', color: '#888' }}>
+            <div><strong>Страна:</strong> {product.country}</div>
+            {product.club && <div><strong>Клуб:</strong> {product.club}</div>}
+            <div><strong>Сезон:</strong> {product.year} гг.</div>
+            <div><strong>Тип экипировки:</strong> {product.type}</div>
           </div>
 
-          {/* ВЫБОР РАЗМЕРА */}
-          <div style={{ marginBottom: '35px' }}>
-            <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', letterSpacing: '1px' }}>ВЫБЕРИТЕ РАЗМЕР:</h5>
-            <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ color: '#27ae60', fontWeight: 'bold', fontSize: '36px', margin: '10px 0' }}>
+            {product.price_str || `${product.price_num} ₽`}
+          </div>
+
+          {/* Селектор размеров */}
+          <div className="size-selector-section">
+            <span style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', opacity: 0.6, marginBottom: '10px' }}>ВЫБЕРИТЕ РАЗМЕР:</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
               {sizesList.map(sz => (
                 <button 
                   key={sz} 
-                  type="button" 
-                  onClick={() => setModalSize(sz)} 
-                  style={{ padding: '10px 18px', backgroundColor: selectedSize === sz ? '#e67e22' : '#222', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                  onClick={() => setSelectedSize(sz)} 
+                  style={{ 
+                    padding: '8px 16px', 
+                    background: selectedSize === sz ? '#e67e22' : '#222', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: '6px', 
+                    cursor: 'pointer', 
+                    fontWeight: 'bold',
+                    transition: '0.2s'
+                  }}
                 >
                   {sz}
                 </button>
@@ -112,51 +94,28 @@ function ProductPage({ addToCart }) {
             </div>
           </div>
 
-          {/* ИСПРАВЛЕНО: Чистый текст кнопки без смайлика корзины */}
+          {/* Кнопка добавления в корзину */}
           <button 
-            type="button" 
-            onClick={() => { addToCart(product, selectedSize); alert('Товар добавлен в корзину!'); }} 
-            style={{ width: '100%', maxWidth: '350px', padding: '16px', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}
+            onClick={() => addToCart({ ...product, selectedSize })}
+            style={{ 
+              width: '100%', 
+              padding: '15px', 
+              background: '#27ae60', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              fontWeight: 'bold', 
+              fontSize: '16px',
+              marginTop: '10px',
+              transition: '0.2s'
+            }}
           >
             ДОБАВИТЬ В КОРЗИНУ
           </button>
         </div>
+
       </div>
-
-      {/* ТРЕБОВАНИЕ ДИПЛОМА: ПОХОЖИЕ ТОВАРЫ */}
-      {similarProducts.length > 0 && (
-        <div style={{ marginTop: '80px' }}>
-          <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '30px', borderLeft: '4px solid #e67e22', paddingLeft: '15px' }}>
-            ВАМ МОЖЕТ ПОНРАВИТЬСЯ (ПОХОЖИЕ МОДЕЛИ)
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '25px' }}>
-            {similarProducts.map(p => {
-              const simTitle = p.title || p.name || "Похожий товар";
-              const simPrice = p.price_str || p.price || (p.price_num ? `${p.price_num} ₽` : "5 800 ₽");
-              return (
-                <Link 
-                  to={`/product/${p.id}`} 
-                  state={{ product: p }} // Передаем состояние товара дальше при кликах по похожим моделям!
-                  key={p.id} 
-                  style={{ textDecoration: 'none', color: '#fff', backgroundColor: '#111', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222', display: 'block', transition: '0.3s' }}
-                >
-                  <img 
-                    src={`/src/assets/images/${p.image || 'spainfuria2026.png'}`} 
-                    alt={simTitle} 
-                    style={{ width: '100%', display: 'block' }} 
-                    onError={(e) => { e.currentTarget.src = '/src/assets/images/spainfuria2026.png'; }}
-                  />
-                  <div style={{ padding: '15px' }}>
-                    <h4 style={{ fontSize: '14px', margin: '0 0 10px 0', height: '38px', overflow: 'hidden', fontWeight: 'bold' }}>{simTitle}</h4>
-                    <span style={{ color: '#2ecc71', fontWeight: '900' }}>{simPrice}</span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
