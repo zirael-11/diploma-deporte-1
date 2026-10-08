@@ -1,0 +1,30 @@
+
+.dark-theme { --surface: #111; --surface-alt: #1a1a1a; --bg-card: #111; --muted: #b0b6c0; --success-text: #2ecc71; --accent-text: #ffa94d; }
+.light-theme { --surface: #fff; --surface-alt: #f0f2f5; --bg-card: #fff; --muted: #545d69; --border-color: #d6dce4; --success-text: #137a42; --accent-text: #a84c00; }
+.header-user-name-label { color: var(--text-main) !important; }
+.header-user-name-label.admin { color: #b55400 !important; }
+.dark-theme .header-user-name-label.admin { color: #ffa94d !important; }
+.premium-cabinet-container, .checkout-page-container, .product-page-container { color: var(--text-main) !important; }
+.premium-cabinet-container .premium-auth-title { color: var(--text-main) !important; }
+.light-theme .premium-cabinet-container > div { background-color: var(--surface) !important; }
+.premium-cabinet-subtitle, .info-label-text { color: var(--muted); opacity: 1 !important; }
+.premium-cabinet-container button:not(.premium-cabinet-logout-btn), .edit-product-button,
+.product-edit-form button, .guest-password-field button {
+  padding: 10px 16px; border: 1px solid var(--border-color); border-radius: 6px;
+  background: var(--surface-alt); color: var(--text-main); cursor: pointer;
+}
+button:disabled { cursor: wait; opacity: .55; }
+.product-edit-form, .guest-password-field {
+  display: grid; gap: 12px; padding: 18px; margin: 16px 0; border: 1px solid var(--border-color); border-radius: 10px;
+  label { display: grid; gap: 7px; color: var(--text-main); }
+  input, textarea { padding: 12px; border: 1px solid var(--border-color); border-radius: 6px;
+    background: var(--surface-alt); color: var(--text-main); font: inherit; width: 100%; }
+  p { color: var(--muted); font-size: 13px; }
+}
+.account-credentials { display: block; margin: 20px 0; padding: 16px; border: 1px solid var(--border-color); text-align: left; overflow-wrap: anywhere; }
+.smooth-slider {
+  .slide-viewport { display: grid; position: relative; }
+  .banner-img { grid-area: 1 / 1; width: 100%; opacity: 0; transition: opacity 1s cubic-bezier(.4, 0, .2, 1); pointer-events: none; }
+  .banner-img.is-active { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .smooth-slider .banner-img { transition: none; } }

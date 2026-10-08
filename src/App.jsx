@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
+import './styles/main.scss';
+import BannerSlider from './components/BannerSlider';
+import { setShopping, resetShopping } from './store/shoppingSlice';
+import { api, GUEST } from './api';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProducts } from './store/productsSlice';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Checkout from './pages/Checkout';
 import frame1 from './assets/images/frame1.png';
@@ -13,25 +18,11 @@ import cart from './assets/icons/cart.svg';
 import heart from './assets/icons/heart.svg';
 import phone from './assets/icons/phone.svg';
 import search from './assets/icons/search.svg';
-import sunIcon from './assets/icons/sun.svg';   
-import moonIcon from './assets/icons/moon.svg'; 
-import userIcon from './assets/icons/user.svg'; 
+import sunIcon from './assets/icons/sun.svg';
+import moonIcon from './assets/icons/moon.svg';
+import userIcon from './assets/icons/user.svg';
 
-import spainfuria2026 from './assets/images/spainfuria2026.png';
-import spain2furia2026 from './assets/images/spain2furia2026.png';
-import spaindelafuente from './assets/images/spaindelafuente.png';
-import spaindelafuente2 from './assets/images/spaindelafuente2.png';
-import spainflores from './assets/images/spainflores.png';
-import spainflores2 from './assets/images/spainflores2.png';
-import spainvratar from './assets/images/spainvratar.png';
-import spainvratar2 from './assets/images/spainvratar2.png';
 
-import germanhome2026 from './assets/images/germanhome2026.png';
-import german2home2026 from './assets/images/german2home2026.png';
-import germangost2026 from './assets/images/germangost2026.png';
-import german2gost2026 from './assets/images/german2gost2026.png';
-import germantrenirovka26 from './assets/images/germantrenirovka26.png';
-import german2trenirovka26 from './assets/images/german2trenirovka26.png';
 
 import Catalog from './pages/catalog';
 import Profile from './pages/profile';
@@ -42,45 +33,92 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 function App() {
-  const [currentSlide, setCurrentSlide] = useState(0);
   const banners = [frame1, frame2, frame3, frame4, frame5];
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [favorites, setFavorites] = useState([]);
-  const [cartItems, setCartItems] = useState([]); 
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('deporteTheme') !== 'light');
+  useEffect(() => { localStorage.setItem('deporteTheme', isDarkMode ? 'dark' : 'light'); }, [isDarkMode]);
+  const { favorites, cart: cartItems, ready: shoppingReady } = useSelector(state => state.shopping);
   const [toast, setToast] = useState({ isVisible: false, message: '' });
-  const [currentUser, setCurrentUser] = useState({ name: 'Гость', role: 'user' });
+  const [currentUser, setCurrentUser] = useState(GUEST);
+  const [authReady, setAuthReady] = useState(false);
+  const [authError, setAuthError] = useState('');
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
+  const products = useSelector(state => state.products.items);
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [currentSlide, banners.length]);
+    dispatch(fetchProducts());
+    localStorage.removeItem('currentUser');
+    api('/auth/me').then(setCurrentUser).catch(err => {
+      if (err.status !== 401) setAuthError(err.message);
+    }).finally(() => setAuthReady(true));
+  }, [dispatch]);
 
-  const toggleFavorite = (product) => {
-    setFavorites((prev) => {
-      const isAlreadyFav = prev.some((item) => item.id === product.id);
-      return isAlreadyFav ? prev.filter((item) => item.id !== product.id) : [...prev, product];
-    });
+  const [shoppingBusy, setShoppingBusy] = useState(false);
+  const readGuest = () => {
+    try { const data = JSON.parse(localStorage.getItem('deporteGuestShopping') || '{}');
+      return { cart: Array.isArray(data.cart) ? data.cart : [], favorites: Array.isArray(data.favorites) ? data.favorites : [] };
+    } catch { return { cart: [], favorites: [] }; }
+  };
+  const saveShopping = data => {
+    dispatch(setShopping(data));
+    if (!currentUser.id) localStorage.setItem('deporteGuestShopping', JSON.stringify(data));
+  };
+  useEffect(() => {
+    if (!authReady) return;
+    let active = true;
+    dispatch(resetShopping());
+    const guest = readGuest();
+    if (!currentUser.id) { dispatch(setShopping(guest)); return; }
+    const restore = async () => {
+      try {
+        const data = guest.cart.length || guest.favorites.length
+          ? await api('/shopping/import', { method: 'POST', body: JSON.stringify({
+              cart: guest.cart.map(item => ({ product_id: String(item.id), quantity: item.quantity, size: item.size || 'M' })),
+              favorites: guest.favorites.map(item => String(item.id)),
+            }) }) : await api('/shopping');
+        if (active) {
+          dispatch(setShopping(data));
+          localStorage.removeItem('deporteGuestShopping');
+        }
+      } catch (err) { if (active) setAuthError(err.message); }
+    };
+    restore();
+    return () => { active = false; };
+  }, [currentUser.id, authReady, dispatch]);
+
+  const toggleFavorite = async product => {
+    if (!shoppingReady || shoppingBusy) return;
+    const enabled = !favorites.some(item => item.id === product.id);
+    setShoppingBusy(true);
+    try {
+      if (currentUser.id) saveShopping(await api('/favorites', { method: 'PUT', body: JSON.stringify({ product_id: String(product.id), enabled }) }));
+      else saveShopping({ cart: cartItems, favorites: enabled ? [...favorites, product] : favorites.filter(item => item.id !== product.id) });
+    } catch (err) { setAuthError(err.message); }
+    finally { setShoppingBusy(false); }
   };
 
-  const addToCart = (product, selectedSize = 'M') => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id && item.size === selectedSize);
-      if (existingItem) {
-        return prevItems.map((item) => item.id === product.id && item.size === selectedSize ? { ...item, quantity: item.quantity + 1 } : item);
+  const changeCart = async (product, size, quantity) => {
+    if (!shoppingReady || shoppingBusy) return;
+    setShoppingBusy(true);
+    try {
+      if (currentUser.id) saveShopping(await api('/cart', { method: 'PUT', body: JSON.stringify({ product_id: String(product.id), size, quantity }) }));
+      else {
+        const remaining = cartItems.filter(item => !(item.id === product.id && item.size === size));
+        saveShopping({ favorites, cart: quantity > 0 ? [...remaining, { ...product, size, quantity }] : remaining });
       }
-      return [...prevItems, { ...product, size: selectedSize, quantity: 1 }];
-    });
-    setToast({ isVisible: true, message: `Товар добавлен в корзину! Размер: ${selectedSize}` });
+      return true;
+    } catch (err) { setAuthError(err.message); return false; }
+    finally { setShoppingBusy(false); }
   };
+  const addToCart = async (product, selectedSize = 'M') => {
+    const existing = cartItems.find(item => item.id === product.id && item.size === selectedSize);
+    if (await changeCart(product, selectedSize, Math.min(100, (existing?.quantity || 0) + 1)))
+      setToast({ isVisible: true, message: `Товар добавлен в корзину! Размер: ${selectedSize}` });
+  };
+  const updateCartItem = (item, quantity) => changeCart(item, item.size || 'M', quantity);
   const clearCart = () => {
-    if (typeof setCartItems === 'function') {
-      setCartItems([]); // Если стейт корзины называется так
-    } else if (typeof setCart === 'function') {
-      setCart([]); // На случай, если стейт называется просто setCart
-    }
+    const guest = readGuest();
+    localStorage.setItem('deporteGuestShopping', JSON.stringify({ ...guest, cart: [] }));
+    dispatch(setShopping({ favorites, cart: [] }));
   };
 
   useEffect(() => {
@@ -92,24 +130,16 @@ function App() {
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const popularProducts = [
-    { id: 101, title: 'Домашний комплект Spain Furia 2026', price: '5 800 ₽', priceNum: 5800, category: 'Форма', image: spainfuria2026, imageHover: spain2furia2026, mainCategory: 'Форма сборных', country: 'Испания', club: null, year: '2026', type: 'Домашняя', description: 'Официальный комплект формы сборной Испании.' },
-    { id: 102, title: 'Домашняя форма сборной Германии 2026', price: '6 100 ₽', priceNum: 6100, category: 'Форма', image: germanhome2026, imageHover: german2home2026, mainCategory: 'Форма сборных', country: 'Германия', club: null, year: '2026', type: 'Домашняя', description: 'Классический домашний белый комплект сборной Германии Манншафт.' },
-    { id: 103, title: 'Гостевая форма сборной Германии (2026)', price: '4 900 ₽', priceNum: 4900, category: 'Форма', image: germangost2026, imageHover: german2gost2026, mainCategory: 'Форма сборных', country: 'Германия', club: null, year: '2026', type: 'Гостевая', description: 'Трендовый выездной комплект немецкой сборной.' },
-    { id: 104, title: 'Тренировочный лонгслив Германии 2026', price: '6 500 ₽', priceNum: 6500, category: 'Спец.коллекция', image: germantrenirovka26, imageHover: german2trenirovka26, mainCategory: 'Форма сборных', country: 'Германия', club: null, year: '2026', type: 'Специальная коллекция', description: 'Официальная разминочная экипировка для тренировок.' }
-  ];
+  const popularProducts = products.slice(0, 4).map(p => ({ ...p,
+    price: p.price_str, priceNum: Number(p.price_num),
+    image: `/images/${p.image}`, imageHover: `/images/${p.image_hover}`,
+  }));
 
   // ИСПРАВЛЕНО: Полноценный компонент главной страницы с правильной областью видимости хуков
   const HomePage = () => {
     return (
       <div className="home-page-wrapper">
-        <main className="hero-slider-section">
-          <button className="slider-arrow arrow-left" onClick={() => setCurrentSlide(c => c === 0 ? banners.length - 1 : c - 1)}>❮</button>
-          <div className="slide-viewport">
-            <img key={currentSlide} src={banners[currentSlide]} alt="Баннер" className="banner-img banner-img-fade" />
-          </div>
-          <button className="slider-arrow arrow-right" onClick={() => setCurrentSlide(c => c === banners.length - 1 ? 0 : c + 1)}>❯</button>
-        </main>
+        <BannerSlider banners={banners} />
 
         <section className="home-popular-section">
           <div className="section-title-container">
@@ -165,7 +195,7 @@ function App() {
         <span className="toast-success-icon">✓</span>
         <div className="toast-message-text">{toast.message}</div>
       </div>
-      
+
       <header className="main-header">
         <div className="header-left">
           <button className="catalog-btn" onClick={() => navigate('/catalog')}>☰ КАТАЛОГ</button>
@@ -184,19 +214,19 @@ function App() {
           <button className="nav-icon-btn" onClick={() => navigate('/catalog')}>
             <img src={search} alt="Поиск" className="custom-icon" />
           </button>
-          
+
           {/* ИСПРАВЛЕНО: иконка профиля, под которой пишется имя вошедшего аккаунта */}
           <button className="nav-icon-btn premium-header-user-btn" onClick={() => navigate('/profile')} title="Личный кабинет">
             <div className="header-user-icon-container">
               <img src={userIcon} alt="Профиль" className="custom-icon" />
-              {currentUser && currentUser.name !== 'Гость' && (
+              {currentUser?.id && (
                 <span className={`header-user-name-label ${currentUser.role}`}>
                   {currentUser.name.split(' ')[0]} {/* Берем только первое имя без фамилии, чтобы не растягивать шапку */}
                 </span>
               )}
             </div>
           </button>
-          
+
           <button className="nav-icon-btn cart-btn" onClick={() => navigate('/favorites')}>
             <img src={heart} alt="Избранное" className="custom-icon" />
             {favorites.length > 0 && <span className="cart-badge" style={{ backgroundColor: '#2ecc71' }}>{favorites.length}</span>}
@@ -209,21 +239,21 @@ function App() {
         </div>
       </header>
       <div className="page-content-wrapper">
+        {authError && <p className="auth-error" role="alert">{authError}</p>}
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={HomePage()} />
           <Route path="/catalog" element={<Catalog favorites={favorites} toggleFavorite={toggleFavorite} addToCart={addToCart} currentUser={currentUser} />} />
-          <Route path="/profile" element={<Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
           <Route path="/favorites" element={<Favorites favorites={favorites} toggleFavorite={toggleFavorite} addToCart={addToCart} />} />
-          <Route path="/cart" element={<Cart cartItems={cartItems} setCartItems={setCartItems} />} />
+          <Route path="/cart" element={<Cart cartItems={cartItems} updateCartItem={updateCartItem} busy={shoppingBusy} />} />
           <Route path="/product/:id" element={<ProductPage addToCart={addToCart} />} />
-                  <Route 
-          path="/checkout" 
+                  <Route
+          path="/checkout"
           element={<Checkout cartItems={cartItems} clearCart={clearCart} currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
-          <Route path="/profile" element={currentUser.name === 'Гость' ? <Navigate to="/login" replace /> : <Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
+          <Route path="/profile" element={!authReady ? <p>Проверка сессии…</p> : !currentUser.id ? <Navigate to="/login" replace /> : <Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
         {/* ПУТИ ДЛЯ СТРАНИЦ АВТОРИЗАЦИИ И РЕГИСТРАЦИИ */}
           <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
           <Route path="/register" element={<Register />} />
-          
+
         </Routes>
       </div>
     </div>

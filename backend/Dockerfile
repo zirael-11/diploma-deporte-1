@@ -36,10 +36,10 @@ ENV PATH="/app/.venv/bin:$PATH"
 USER appuser
 
 # ЭТАП 5: Финальный образ с кодом приложения (Production)
-FROM base AS production
+FROM runtime AS production
 # Копируем всю структуру бэкенда (включая приложение, ini-файлы и migrations)
-COPY . .
+COPY --chown=appuser:appgroup . .
 
 # Открываем порт и запускаем FastAPI для DEPORTE
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

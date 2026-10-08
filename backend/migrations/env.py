@@ -28,7 +28,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(connection=connection, target_metadata=target_metadata, include_schemas=True)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -37,7 +37,7 @@ async def run_migrations_online() -> None:
     # Динамически подставляем асинхронный URL из нашего Pydantic конфига
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = str(settings.database_url)
-    
+
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",

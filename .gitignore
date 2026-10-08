@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.venv/
+__pycache__/
+*.pyc
+*.dump
+
+# Local settings and database backups
+.env
+.env.*
+!.env.example
+*.sql.gz
+.pytest_cache/

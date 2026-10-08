@@ -1,208 +1,307 @@
-from fastapi import FastAPI, HTTPException, status, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
-import uuid
-import app.models as models
-from app.models import UserRole
-from sqlalchemy import select, delete, text
-from app.core.database import engine, get_async_db
-from app import schemas
-import redis
+import json
+import os
+import secrets
 from contextlib import asynccontextmanager
+from decimal import Decimal
 
+import redis.asyncio as redis
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi.middleware.cors import CORSMiddleware
+from pwdlib import PasswordHash
+from sqlalchemy import delete, or_, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-# ИСПРАВЛЕНО: Импортируем все валидационные схемы из папки schemas по канонам преподавателя
-from app.schemas.user import UserCreateRequest, UserLogin, UserResponse, ProductCreate
+from app import models
+from app.core.database import get_async_db
+from app.schemas.user import (UserCreateRequest, UserLogin, UserResponse,
+                              ProductCreate, ProductUpdate, OrderCreate, GuestOrderCreate, CartWrite, FavoriteWrite, ShoppingImport)
+
+password_hash = PasswordHash.recommended()
+redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "redis"),
+                           port=int(os.getenv("REDIS_PORT", "6379")), decode_responses=True)
+SESSION_TTL = 86400
+
+def user_response(user):
+    return {"id": str(user.id), "username": user.username, "email": user.email,
+            "name": user.name, "role": user.role}
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Автоматически создаем недостающие таблицы при старте Docker-контейнера
-    async with engine.begin() as conn:
-        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS catalog;"))
-        await conn.run_sync(models.Base.metadata.create_all)
+async def lifespan(app):
+    from app.core.database import SessionLocal
+    async with SessionLocal() as db:
+        username = os.getenv("ADMIN_USERNAME", "admin")
+        existing = await db.scalar(select(models.User).where(models.User.username == username))
+        if not existing:
+            db.add(models.User(username=username, email=os.getenv("ADMIN_EMAIL", "admin@deporte.ru"),
+                               name="Администратор", role="admin",
+                               password=password_hash.hash(os.getenv("ADMIN_PASSWORD", "admin"))))
+            try:
+                await db.commit()
+            except IntegrityError:
+                await db.rollback()
     yield
+    await redis_client.aclose()
 
-# Инициализируем приложение, передавая созданный lifespan-менеджер
-app = FastAPI(
-    title="DEPORTE Спортивный Интернет-Магазин API (SQLAlchemy Async)",
-    lifespan=lifespan
-)
+app = FastAPI(title="DEPORTE API", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+                   allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# Настройка CORS-политики для бесперебойной связи с React-фронтендом
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+async def current_user(request: Request, db: AsyncSession = Depends(get_async_db)):
+    token = request.cookies.get("session_id")
+    user_id = await redis_client.get(f"session:{token}") if token else None
+    user = await db.get(models.User, user_id) if user_id else None
+    if not user or not user.is_active:
+        raise HTTPException(401, "Войдите в аккаунт")
+    return user
 
+async def admin_user(user=Depends(current_user)):
+    if user.role != "admin":
+        raise HTTPException(403, "Недостаточно прав")
+    return user
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+async def start_session(user, request, response):
+    old_token = request.cookies.get("session_id")
+    if old_token:
+        await redis_client.delete(f"session:{old_token}")
+    token = secrets.token_urlsafe(32)
+    await redis_client.setex(f"session:{token}", SESSION_TTL, str(user.id))
+    response.set_cookie("session_id", token, max_age=SESSION_TTL, httponly=True,
+                        samesite="lax", secure=os.getenv("COOKIE_SECURE", "false").lower() == "true")
 
-@app.on_event("startup")
-async def on_startup():
-    async with engine.begin() as conn:
-        # Принудительно создаем схему catalog, чтобы SQLAlchemy не падала с ошибкой 500!
-        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS catalog;"))
-        # Спокойно создаем таблицы со всеми колонками (включая created_at)
-        await conn.run_sync(models.Base.metadata.create_all)
-
-
-# --- ЭНДПОИНТЫ API ---
-
-@app.get("/products")
-async def get_products(db: AsyncSession = Depends(get_async_db)):
-    result = await db.execute(select(models.Product))
-    return result.scalars().all()
-
-@app.post("/products", status_code=status.HTTP_201_CREATED)
-async def create_product(product_data: dict, db: AsyncSession = Depends(get_async_db)):
+@app.post("/auth/register", response_model=UserResponse, status_code=201)
+async def register(data: UserCreateRequest, db: AsyncSession = Depends(get_async_db)):
+    username, email = data.username.strip(), data.email.strip().lower()
+    if not username or "@" not in email or email.startswith("@") or email.endswith("@"):
+        raise HTTPException(422, "Укажите логин и корректный email")
+    existing = await db.scalar(select(models.User).where(or_(models.User.username == username,
+                                                            models.User.email == email)))
+    if existing:
+        raise HTTPException(409, "Логин или email уже зарегистрирован")
+    user = models.User(username=username, email=email, name=(data.name or username).strip() or username,
+                       password=password_hash.hash(data.password), role="user")
+    db.add(user)
     try:
-        new_product = models.Product(
-            id=str(uuid.uuid4()),
-            title=product_data.get("title"),
-            main_category=product_data.get("main_category"),
-            country=product_data.get("country"),
-            club=product_data.get("club"),
-            year=product_data.get("year"),
-            type=product_data.get("type"),
-            price_num=int(product_data.get("price_num", 0)),
-            price_str=product_data.get("price_str"),
-            description=product_data.get("description"),
-            image=product_data.get("image"),
-            image_hover=product_data.get("image_hover")
-        )
-        db.add(new_product)
         await db.commit()
-        await db.refresh(new_product)
-        return new_product
-    except Exception as e:
+    except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-        
-        return {"status": "success", "message": "Товар успешно добавлен в PostgreSQL", "product_id": new_product.id}
-        
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Ошибка базы данных: {str(e)}")
-
-@app.post("/auth/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreateRequest, db: AsyncSession = Depends(get_async_db)):
-    result = await db.execute(select(models.User).filter(models.User.username == user_data.username))
-    existing_user = result.scalars().first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Пользователь с таким именем уже существует!")
-    
-    display_name = user_data.name if user_data.name else user_data.username.capitalize()
-    
-    new_user = models.User(
-        username=user_data.username,
-        password=user_data.password,
-        name=display_name,
-        role=UserRole.USER.value
-    )
-    db.add(new_user)
-    await db.commit()
-    return {"name": display_name, "role": UserRole.USER.value}
+        raise HTTPException(409, "Логин или email уже зарегистрирован")
+    return user_response(user)
 
 @app.post("/auth/login", response_model=UserResponse)
-async def login(user_data: UserLogin, db: AsyncSession = Depends(get_async_db)):
-    if user_data.username.lower() == "admin" and user_data.password == "admin":
-        return {"name": "Ника (Админ)", "role": UserRole.ADMIN.value}
-        
-    result = await db.execute(select(models.User).filter(models.User.username == user_data.username))
-    user = result.scalars().first()
-    
+async def login(data: UserLogin, request: Request, response: Response,
+                db: AsyncSession = Depends(get_async_db)):
+    identifier = data.username.strip()
+    user = await db.scalar(select(models.User).where(or_(models.User.username == identifier,
+                                                       models.User.email == identifier.lower())))
+    valid = False
+    if user and user.is_active:
+        if user.password.startswith("$argon2"):
+            try:
+                valid = password_hash.verify(data.password, user.password)
+            except Exception:
+                valid = False
+        else:
+
+            valid = secrets.compare_digest(data.password.encode(), user.password.encode())
+            if valid:
+                user.password = password_hash.hash(data.password)
+                await db.commit()
+    if not valid:
+        raise HTTPException(401, "Неверный логин/email или пароль")
+    await start_session(user, request, response)
+    return user_response(user)
+
+@app.get("/auth/me", response_model=UserResponse)
+async def me(user=Depends(current_user)):
+    return user_response(user)
+
+@app.post("/auth/logout")
+async def logout(request: Request, response: Response):
+    token = request.cookies.get("session_id")
+    if token:
+        await redis_client.delete(f"session:{token}")
+    response.delete_cookie("session_id")
+    return {"status": "success"}
+
+@app.get("/users")
+async def users(admin=Depends(admin_user), db: AsyncSession = Depends(get_async_db)):
+    rows = (await db.scalars(select(models.User).order_by(models.User.created_at.desc()))).all()
+    orders = (await db.scalars(select(models.Order).order_by(models.Order.created_at.desc()))).all()
+    latest = {}
+    for order in orders:
+        latest.setdefault(order.user_id, order)
+    result = []
+    for user in rows:
+        order = latest.get(user.id)
+        summary = (f"DEPORTE-{order.id[:8]}: " + "; ".join(
+            f"{item['title']}, {item['size']}, {item['quantity']} шт." for item in order.items)) if order else "Нет заказов"
+        result.append({**user_response(user), "order": summary})
+    return result
+
+@app.delete("/users/{user_id}")
+async def delete_user(user_id: str, admin=Depends(admin_user), db: AsyncSession = Depends(get_async_db)):
+    user = await db.get(models.User, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден! Пожалуйста, зарегистрируйтесь.")
-        
-    if user.password != user_data.password:
-        raise HTTPException(status_code=401, detail="Неверный логин или пароль!")
-        
-    return {"name": user.name, "role": user.role}
+        raise HTTPException(404, "Пользователь не найден")
+    if user.role == "admin":
+        raise HTTPException(400, "Удаление администратора запрещено")
+    await db.delete(user)
+    await db.commit()
+    return {"status": "success"}
+
+@app.get("/products")
+async def products(db: AsyncSession = Depends(get_async_db)):
+    return (await db.scalars(select(models.Product).order_by(models.Product.created_at, models.Product.id))).all()
+
+@app.post("/products", status_code=201)
+async def create_product(data: ProductCreate, admin=Depends(admin_user), db: AsyncSession = Depends(get_async_db)):
+    product = models.Product(**data.model_dump())
+    db.add(product)
+    await db.commit()
+    await db.refresh(product)
+    return product
+
+@app.patch("/products/{product_id}")
+async def update_product(product_id: str, data: ProductUpdate, admin=Depends(admin_user), db: AsyncSession = Depends(get_async_db)):
+    product = await db.get(models.Product, product_id)
+    if not product:
+        raise HTTPException(404, "Товар не найден")
+    for key, value in data.model_dump().items():
+        setattr(product, key, value)
+    product.price_str = f"{data.price_num:,.2f}".replace(",", " ") + " ₽"
+    await db.commit()
+    return product
 
 @app.delete("/products/{product_id}")
-async def delete_product(product_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)): # ИСПРАВЛЕНО: тип uuid.UUID
-    result = await db.execute(select(models.Product).filter(models.Product.id == product_id))
-    product = result.scalars().first()
+async def delete_product(product_id: str, admin=Depends(admin_user), db: AsyncSession = Depends(get_async_db)):
+    product = await db.get(models.Product, product_id)
     if not product:
-        raise HTTPException(status_code=404, detail="Товар не найден")
-    await db.execute(delete(models.Product).filter(models.Product.id == product_id))
+        raise HTTPException(404, "Товар не найден")
+    await db.delete(product)
     await db.commit()
-    return {"status": "success", "message": f"Товар {product_id} успешно удален через SQLAlchemy Async"}
+    return {"status": "success"}
 
-import json
-from fastapi import HTTPException, status
+def product_response(product):
+    return {column.name: getattr(product, column.name) for column in product.__table__.columns}
 
-@app.post("/api/cart/add")
-async def add_to_cart(cart_data: dict, db: AsyncSession = Depends(get_async_db)):
-    user_id = cart_data.get("user_id") # Проверяем, авторизован ли пользователь
-    product_id = cart_data.get("product_id")
-    size = cart_data.get("selected_size", "M")
-    
-    if not product_id:
-        raise HTTPException(status_code=400, detail="Product ID required")
+async def lock_shopping(user, db):
+    # Serialize per-user changes to avoid duplicate rows or lost quantity updates.
+    await db.scalar(select(models.User).where(models.User.id == user.id).with_for_update())
 
-    # ВАРИАНТ 1: ПОЛЬЗОВАТЕЛЬ АВТОРИЗОВАН -> ПИШЕМ В POSTGRESQL
-    if user_id:
-        try:
-            # Ищем, нет ли уже такого товара у этого юзера в корзине
-            result = await db.execute(
-                select(models.CartItem).where(
-                    models.CartItem.user_id == user_id, 
-                    models.CartItem.product_id == product_id,
-                    models.CartItem.selected_size == size
-                )
-            )
-            existing_item = result.scalar_one_or_none()
-            
-            if existing_item:
-                existing_item.quantity += 1
-            else:
-                new_item = models.CartItem(
-                    id=str(uuid.uuid4()),
-                    user_id=user_id,
-                    product_id=product_id,
-                    quantity=1,
-                    selected_size=size
-                )
-                db.add(new_item)
-                
-            await db.commit()
-            return {"status": "success", "storage": "postgresql", "message": "Добавлено в Postgres"}
-        except Exception as e:
-            await db.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+async def shopping_response(user, db):
+    rows = (await db.execute(select(models.CartItem, models.Product).join(models.Product,
+        models.CartItem.product_id == models.Product.id).where(models.CartItem.user_id == user.id))).all()
+    favorite_rows = (await db.scalars(select(models.Product).join(models.Favorite,
+        models.Favorite.product_id == models.Product.id).where(models.Favorite.user_id == user.id))).all()
+    return {"cart": [{**product_response(product), "size": item.selected_size, "quantity": item.quantity}
+                     for item, product in rows], "favorites": [product_response(p) for p in favorite_rows]}
 
-    #ВАРИАНТ 2: ГОСТЬ (АНОНИМ) -> ПИШЕМ В REDIS
+@app.get("/shopping")
+async def shopping(user=Depends(current_user), db: AsyncSession = Depends(get_async_db)):
+    return await shopping_response(user, db)
+
+async def set_cart_item(user, db, product_id, size, quantity, merge=False):
+    if not await db.get(models.Product, product_id):
+        raise HTTPException(404, "Товар больше не существует")
+    item = await db.scalar(select(models.CartItem).where(models.CartItem.user_id == user.id,
+                          models.CartItem.product_id == product_id, models.CartItem.selected_size == size))
+    if quantity == 0:
+        if item: await db.delete(item)
+    elif item:
+        item.quantity = max(item.quantity, quantity) if merge else quantity
     else:
-        # В качестве ключа используем временный токен сессии гостя (например, guest_session_123)
-        session_id = cart_data.get("session_id", "guest_anonymous_session")
-        redis_key = f"cart:{session_id}"
-        
-        # Достаем текущую корзину гостя из оперативной памяти Redis
-        current_cart_raw = redis_client.get(redis_key)
-        current_cart = json.loads(current_cart_raw) if current_cart_raw else []
-        
-        # Проверяем, есть ли товар в массиве Redis
-        item_found = False
-        for item in current_cart:
-            if item["product_id"] == product_id and item["selected_size"] == size:
-                item["quantity"] += 1
-                item_found = True
-                break
-                
-        if not item_found:
-            current_cart.append({"product_id": product_id, "quantity": 1, "selected_size": size})
-            
-        # Сохраняем обновленный массив обратно в Redis и ставим TTL 24 часа (время жизни корзины гостя)
-        redis_client.setex(redis_key, 86400, json.dumps(current_cart))
-        return {"status": "success", "storage": "redis", "message": "Добавлено в Redis кэш"}
+        db.add(models.CartItem(user_id=user.id, product_id=product_id, selected_size=size, quantity=quantity))
+    await db.flush()
+
+@app.put("/cart")
+async def write_cart(data: CartWrite, user=Depends(current_user), db: AsyncSession = Depends(get_async_db)):
+    await lock_shopping(user, db)
+    await set_cart_item(user, db, data.product_id, data.size, data.quantity)
+    await db.commit()
+    return await shopping_response(user, db)
+
+async def set_favorite(user, db, product_id, enabled):
+    if not await db.get(models.Product, product_id):
+        raise HTTPException(404, "Товар больше не существует")
+    favorite = await db.scalar(select(models.Favorite).where(models.Favorite.user_id == user.id,
+                               models.Favorite.product_id == product_id))
+    if enabled and not favorite:
+        db.add(models.Favorite(user_id=user.id, product_id=product_id))
+    elif not enabled and favorite:
+        await db.delete(favorite)
+    await db.flush()
+
+@app.put("/favorites")
+async def write_favorite(data: FavoriteWrite, user=Depends(current_user), db: AsyncSession = Depends(get_async_db)):
+    await lock_shopping(user, db)
+    await set_favorite(user, db, data.product_id, data.enabled)
+    await db.commit()
+    return await shopping_response(user, db)
+
+@app.post("/shopping/import")
+async def import_shopping(data: ShoppingImport, user=Depends(current_user), db: AsyncSession = Depends(get_async_db)):
+    await lock_shopping(user, db)
+    for item in data.cart:
+        # Skip deleted products in old guest data; repeat imports are idempotent.
+        if await db.get(models.Product, item.product_id):
+            await set_cart_item(user, db, item.product_id, item.size, item.quantity, merge=True)
+    for product_id in set(data.favorites):
+        if await db.get(models.Product, product_id):
+            await set_favorite(user, db, product_id, True)
+    await db.commit()
+    return await shopping_response(user, db)
+
+async def order_contents(data, db):
+    items, total = [], Decimal("0")
+    for item in data.items:
+        product = await db.get(models.Product, item.product_id)
+        if not product:
+            raise HTTPException(400, "В корзине есть товар, которого больше нет в каталоге")
+        total += product.price_num * item.quantity
+        items.append({"product_id": product.id, "title": product.title, "size": item.size,
+                      "quantity": item.quantity, "price": str(product.price_num)})
+    return items, total
+
+def order_response(order):
+    return {"id": order.id, "number": f"DEPORTE-{order.id[:8]}", "total": str(order.total)}
+
+@app.post("/orders", status_code=201)
+async def create_order(data: OrderCreate, user=Depends(current_user), db: AsyncSession = Depends(get_async_db)):
+    await lock_shopping(user, db)
+    items, total = await order_contents(data, db)
+    order = models.Order(user_id=user.id, full_name=data.full_name, phone=data.phone,
+                         address=data.address, items=items, total=total)
+    db.add(order)
+    await db.execute(delete(models.CartItem).where(models.CartItem.user_id == user.id))
+    await db.commit()
+    return order_response(order)
+
+@app.post("/orders/guest", status_code=201)
+async def guest_order(data: GuestOrderCreate, request: Request, response: Response,
+                      db: AsyncSession = Depends(get_async_db)):
+    email = data.email.strip().lower()
+    if "@" not in email or email.startswith("@") or email.endswith("@"):
+        raise HTTPException(422, "Укажите корректный email")
+    if await db.scalar(select(models.User).where(models.User.email == email)):
+        raise HTTPException(409, "Этот email уже зарегистрирован. Войдите в аккаунт, чтобы оформить заказ.")
+    items, total = await order_contents(data, db)
+    password = data.password or secrets.token_urlsafe(12)
+    username = "buyer_" + secrets.token_hex(6)
+    user = models.User(username=username, email=email, name=data.full_name,
+                       password=password_hash.hash(password), role="user")
+    db.add(user)
+    try:
+        await db.flush()
+        order = models.Order(user_id=user.id, full_name=data.full_name, phone=data.phone,
+                             address=data.address, items=items, total=total)
+        db.add(order)
+        await db.flush()
+
+        await start_session(user, request, response)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(409, "Email уже зарегистрирован. Войдите в аккаунт.")
+    return {**order_response(order), "user": user_response(user),
+            "credentials": {"email": email, "username": username, "password": password}}

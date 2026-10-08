@@ -1,22 +1,25 @@
+import { api } from '../api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function Checkout({ cartItems = [], clearCart, currentUser, setCurrentUser }) {
   const navigate = useNavigate();
-  
+
   // Состояния формы доставки
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
-  
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
+  const [accountPassword, setAccountPassword] = useState('');
+  const [credentials, setCredentials] = useState(null);
 
   // Автозаполнение, если пользователь УЖЕ залогинен через Redis сессию
   useEffect(() => {
-    if (currentUser && currentUser.name !== 'Гость') {
+    if (currentUser?.id) {
       setFullName(currentUser.name);
       setEmail(currentUser.email || '');
     }
@@ -24,88 +27,45 @@ function Checkout({ cartItems = [], clearCart, currentUser, setCurrentUser }) {
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      const priceNum = parseInt(String(item.price_str || item.price).replace(/[^\d]/g, '')) || 0;
+      const priceNum = Number(item.price_num ?? item.priceNum ?? 0);
       return total + (priceNum * (item.quantity || 1));
     }, 0);
   };
 
-// ФУНКЦИЯ ДЛЯ АВТОМАТИЧЕСКОГО ПЕРЕВОДА РУССКИХ БУКВ В АНГЛИЙСКИЙ ТРАНСЛИТ
-  const translit = (str) => {
-    const ru = {
-      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh', 
-      'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 
-      'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 
-      'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
-    };
-    return str.toLowerCase().split('').map(char => ru[char] || char).join('');
-  };
-
-  const handleSubmitOrder = async (e) => {
+  const handleSubmitOrder = async e => {
     e.preventDefault();
-    if (!fullName || !phone || !address || (!email && currentUser.name === 'Гость')) {
-      return alert('Пожалуйста, заполните все обязательные поля для оформления доставки!');
-    }
-
+    if (!fullName.trim() || !phone.trim() || !address.trim()) return alert('Заполните данные доставки');
+    if (!cartItems.length) return alert('Корзина пуста');
     setLoading(true);
-
     try {
-      // ЕСЛИ ЗАКАЗ ДЕЛАЕТ ГОСТЬ,АВТОМАТИЧЕСКИ СОЗДАЕМ ЕМУ УЧЕТНУЮ ЗАПИСЬ В POSTGRESQL
-      if (currentUser.name === 'Гость') {
-        // Переводим ФИО в безопасный английский логин для схемы бэкенда
-        const safeLogin = translit(fullName).replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
-
-        const response = await fetch('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            login: safeLogin,
-            email: email,
-            password: phone.replace(/[^\d]/g, '') // Временный пароль — цифры телефона
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || 'Ошибка регистрации гостя');
-        }
-
-        const data = await response.json();
-        // Автоматически авторизуем пользователя на фронтенде
-        setCurrentUser({
-          name: fullName,
-          email: email,
-          role: 'user'
-        });
-      }
-
-      // Генерируем финальный номер заказа маркетплейса
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      setOrderNumber(`DEPORTE-${randomNum}`);
+      const order = await api(currentUser.id ? '/orders' : '/orders/guest', { method: 'POST', body: JSON.stringify({
+        full_name: fullName, phone, address,
+        ...(!currentUser.id ? { email, password: accountPassword || null } : {}),
+        items: cartItems.map(item => ({ product_id: String(item.id), quantity: item.quantity || 1, size: item.size || 'M' })),
+      }) });
+      setOrderNumber(order.number);
       setIsSubmitted(true);
       clearCart();
-
-    } catch (error) {
-      console.error("Ошибка при авто-регистрации заказа:", error);
-      alert(`Ошибка: ${error.message || 'Не удалось отправить данные заказа.'}`);
-    } finally {
-      setLoading(false);
-    }
+      if (order.user) { setCredentials(order.credentials); setCurrentUser(order.user); }
+    } catch (err) { alert(err.message); }
+    finally { setLoading(false); }
   };
 
   if (isSubmitted) {
     return (
-      <div style={{ padding: '160px 40px', color: '#fff', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-        <div style={{ backgroundColor: '#111', padding: '40px', borderRadius: '16px', border: '1px solid #2ecc71' }}>
+      <div style={{ padding: '160px 40px', color: 'var(--text-main)', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+        <div style={{ backgroundColor: 'var(--surface)', padding: '40px', borderRadius: '16px', border: '1px solid #2ecc71' }}>
           <span style={{ fontSize: '60px', color: '#2ecc71' }}>✓</span>
           <h2 style={{ fontSize: '28px', fontWeight: 900, margin: '20px 0 10px 0' }}>ЗАКАЗ УСПЕШНО ОФОРМЛЕН!</h2>
           <p style={{ opacity: 0.7, fontSize: '16px', lineHeight: '1.6', marginBottom: '20px' }}>
-            Ника, спасибо за покупку! 
-            {currentUser.name !== 'Гость' && ` Мы создали для вас личный кабинет. Ваш логин: ${email}, а временный пароль — цифры вашего телефона!`}
+            Спасибо за покупку!
+            Заказ сохранён в базе данных.
+            {credentials && <span className="account-credentials"><strong>Аккаунт создан. Сохраните данные для входа:</strong><br />Email: {credentials.email}<br />Логин: {credentials.username}<br />Пароль: {credentials.password}</span>}
           </p>
-          <div style={{ backgroundColor: '#222', padding: '15px', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', color: '#e67e22', marginBottom: '30px' }}>
+          <div style={{ backgroundColor: 'var(--surface-alt)', padding: '15px', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', color: '#e67e22', marginBottom: '30px' }}>
             Номер заказа: {orderNumber}
           </div>
-          <button onClick={() => navigate('/catalog')} style={{ padding: '14px 28px', backgroundColor: '#e67e22', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+          <button onClick={() => navigate('/catalog')} style={{ padding: '14px 28px', backgroundColor: '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
             ВЕРНУТЬСЯ В КАТАЛОГ
           </button>
         </div>
@@ -114,46 +74,53 @@ function Checkout({ cartItems = [], clearCart, currentUser, setCurrentUser }) {
   }
 
   return (
-    <div className="checkout-page-container" style={{ padding: '120px 40px', color: '#fff', maxWidth: '1100px', margin: '0 auto' }}>
+    <div className="checkout-page-container" style={{ padding: '120px 40px', color: 'var(--text-main)', maxWidth: '1100px', margin: '0 auto' }}>
       <h2 style={{ fontSize: '32px', fontWeight: 900, marginBottom: '40px', letterSpacing: '1px' }}>ОФОРМЛЕНИЕ ЗАКАЗА</h2>
-      
+
       <div style={{ display: 'flex', gap: '40px' }}>
-        
+
         {/* ЛЕВАЯ ЧАСТЬ: УМНАЯ ФОРМА ДОСТАВКИ */}
-        <form onSubmit={handleSubmitOrder} style={{ flex: 1, backgroundColor: '#111', padding: '30px', borderRadius: '16px', border: '1px solid #222' }}>
+        <form onSubmit={handleSubmitOrder} style={{ flex: 1, backgroundColor: 'var(--surface)', padding: '30px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
           <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#e67e22', fontWeight: 'bold' }}>
-            {currentUser.name === 'Гость' ? '📋 ОФОРМЛЕНИЕ БЕЗ РЕГИСТРАЦИИ (АККАУНТ СОЗДАСТСЯ АВТОМАТИЧЕСКИ)' : '📋 ДАННЫЕ ПОКУПАТЕЛЯ'}
+            {!currentUser.id ? '📋 ОФОРМЛЕНИЕ БЕЗ РЕГИСТРАЦИИ (АККАУНТ СОЗДАСТСЯ АВТОМАТИЧЕСКИ)' : '📋 ДАННЫЕ ПОКУПАТЕЛЯ'}
           </h3>
-          
+
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', fontSize: '14px', opacity: 0.6, marginBottom: '8px' }}>ФИО получателя *</label>
-            <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Иванов Иван Иванович" style={{ width: '100%', padding: '12px', backgroundColor: '#222', border: '1px solid #333', color: '#fff', borderRadius: '6px' }} required />
+            <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Иванов Иван Иванович" style={{ width: '100%', padding: '12px', backgroundColor: 'var(--surface-alt)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: '6px' }} required />
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '14px', opacity: 0.6, marginBottom: '8px' }}>Контактный телефон (будет паролем) *</label>
-            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+7 (999) 999-99-99" style={{ width: '100%', padding: '12px', backgroundColor: '#222', border: '1px solid #333', color: '#fff', borderRadius: '6px' }} required />
+            <label style={{ display: 'block', fontSize: '14px', opacity: 0.6, marginBottom: '8px' }}>Контактный телефон *</label>
+            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+7 (999) 999-99-99" style={{ width: '100%', padding: '12px', backgroundColor: 'var(--surface-alt)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: '6px' }} required />
           </div>
 
-          {currentUser.name === 'Гость' && (
+          {!currentUser.id && (
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '14px', opacity: 0.6, marginBottom: '8px' }}>Email (для создания личного кабинета) *</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '12px', backgroundColor: '#222', border: '1px solid #333', color: '#fff', borderRadius: '6px' }} required />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '12px', backgroundColor: 'var(--surface-alt)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: '6px' }} required />
             </div>
           )}
 
+          {!currentUser.id && <div className="guest-password-field">
+            <label htmlFor="account-password">Пароль нового аккаунта (необязательно)</label>
+            <input id="account-password" type="password" autoComplete="new-password" minLength={4}
+              value={accountPassword} onChange={e => setAccountPassword(e.target.value)} placeholder="Оставьте пустым — пароль будет сгенерирован" />
+            <p>Аккаунт создастся вместе с заказом. Данные для входа появятся после оформления.</p>
+            <button type="button" onClick={() => navigate('/login')}>У меня уже есть аккаунт</button>
+          </div>}
           <div style={{ marginBottom: '30px' }}>
             <label style={{ display: 'block', fontSize: '14px', opacity: 0.6, marginBottom: '8px' }}>Адрес доставки *</label>
-            <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Город, улица, дом, квартира" rows="3" style={{ width: '100%', padding: '12px', backgroundColor: '#222', border: '1px solid #333', color: '#fff', borderRadius: '6px', resize: 'none' }} required />
+            <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Город, улица, дом, квартира" rows="3" style={{ width: '100%', padding: '12px', backgroundColor: 'var(--surface-alt)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: '6px', resize: 'none' }} required />
           </div>
 
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '16px', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
-            {loading ? 'СОЗДАНИЕ УЧЕТНОЙ ЗАПИСИ И ОФОРМЛЕНИЕ...' : 'ПОДТВЕРДИТЬ И ОПЛАТИТЬ ЗАКАЗ'}
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: '16px', backgroundColor: '#2ecc71', color: 'var(--text-main)', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
+            {loading ? 'СОЗДАНИЕ УЧЕТНОЙ ЗАПИСИ И ОФОРМЛЕНИЕ...' : 'ОФОРМИТЬ ЗАКАЗ'}
           </button>
         </form>
 
         {/* ПРАВАЯ ЧАСТЬ: СОСТАВ КОРЗИНЫ */}
-        <div style={{ width: '400px', backgroundColor: '#111', padding: '30px', borderRadius: '16px', border: '1px solid #222', height: 'fit-content' }}>
+        <div style={{ width: '400px', backgroundColor: 'var(--surface)', padding: '30px', borderRadius: '16px', border: '1px solid var(--border-color)', height: 'fit-content' }}>
           <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>🛒 ВАШ ЗАКАЗ</h3>
           <div style={{ maxHeight: '250px', overflowY: 'auto', marginBottom: '20px' }}>
             {cartItems.map((item, index) => (

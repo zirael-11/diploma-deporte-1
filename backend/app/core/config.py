@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     def assembly_database_url(cls, v, info):
         if v:
             return v
-        
+
         if info.data.get("testing"):
             return PostgresDsn.build(
                 scheme="postgresql+asyncpg", # ПРИНУДИТЕЛЬНО АСИНХРОННЫЙ ДРАЙВЕР
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
                 port=info.data.get("test_postgres_port"),
                 path=info.data.get("test_postgres_db"),
             )
-        
+
         return PostgresDsn.build(
             scheme="postgresql+asyncpg", # ПРИНУДИТЕЛЬНО АСИНХРОННЫЙ ДРАЙВЕР
             username=info.data.get("postgres_user"),

@@ -2,9 +2,9 @@ services:
   # # 1. СЕРВИС ОБРАТНОГО ПРОКСИ-СЕРВЕРА NGINX (WEB-SERVER)
   web-server:
     image: nginx:latest
-    container_name: deporte-web-server
+    container_name: deporte-preview-web-server
     ports:
-      - "80:80"
+      - "127.0.0.1:8080:80"
     volumes:
       - ./backend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       # ПРОБРАСЫВАЕМ ПАПКУ С КАРТИНКАМИ ВНУТРЬ КОНТЕЙНЕРА NGINX:
@@ -20,7 +20,7 @@ services:
   # # 2. СЕРВИС БАЗЫ ДАННЫХ POSTGRESQL (DATABASE)
   database:
     image: postgres:14-alpine3.23
-    container_name: deporte-database
+    container_name: deporte-preview-database
     shm_size: 128mb
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -44,9 +44,9 @@ services:
     build:
       context: ./backend
       target: runtime
-    container_name: deporte-backend
+    container_name: deporte-preview-backend
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8001:8000"
     volumes:
       - ./backend/app:/app/app
       - ./backend/alembic.ini:/app/alembic.ini
@@ -80,7 +80,7 @@ services:
     build:
       context: ./backend
       target: builder # Использует наш оптимизированный builder-этап из Dockerfile
-    container_name: deporte-migrations
+    container_name: deporte-preview-migrations
     environment:
       - DATABASE_URL=postgresql+asyncpg://nika:admin@database:5432/deporte_shop
       - POSTGRES_PORT=5432
@@ -102,7 +102,7 @@ services:
  # # 5. ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ КЭШ REDIS ДЛЯ ХРАНЕНИЯ СЕССИЙ АВТОРИЗАЦИИ
   redis:
     image: redis:alpine3.23
-    container_name: deporte-redis
+    container_name: deporte-preview-redis
     networks:
       - deporte_network
     volumes:

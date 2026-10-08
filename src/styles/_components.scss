@@ -1,0 +1,444 @@
+
+
+.forgot-password-link {
+  text-align: right;
+  font-size: 12px;
+}
+
+
+.forgot-password-link span {
+  color: #888888;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+
+.forgot-password-link span:hover {
+  color: var(--text-main);
+}
+
+
+/* Главная спортивная кнопка */
+.auth-submit-btn {
+  background-color: var(--text-main);
+  color: var(--bg-main);
+  border: none;
+  padding: 14px;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+
+.auth-submit-btn:hover {
+  background-color: #2ecc71; /* Меняется на зеленый при наведении */
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+
+.auth-submit-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ================= СТИЛИ ОБНОВЛЕННОГО ДВУХУРОВНЕВОГО КАТАЛОГА ================= */
+.catalog-page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 130px 40px 60px 40px; /* Большой отступ сверху, чтобы парящая шапка не перекрывала заголовок */
+}
+
+
+.catalog-header-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+
+.catalog-main-title {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+
+.catalog-subtitle {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+
+/* УРОВЕНЬ 1: Главные категории */
+.catalog-filters-bar.main-categories {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 15px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+
+.filter-tab-btn.main-cat-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px 24px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-radius: 4px; /* Строгие спортивные кнопки */
+  transition: all 0.2s ease;
+}
+
+
+.filter-tab-btn.main-cat-btn:hover,
+.filter-tab-btn.main-cat-btn.active {
+  background-color: var(--text-main);
+  color: var(--bg-main);
+  border-color: var(--text-main);
+}
+
+
+.filter-radio-label,
+.filter-checkbox-label {
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 14px !important; /* Сделали шрифт строго одного размера */
+  font-weight: 500 !important;
+  color: var(--text-main) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  text-transform: none !important; /* Убираем капс у подпунктов, оставляя его только для h4 */
+}
+
+
+/* УРОВЕНЬ 2: Подкатегории / Клубы / Страны */
+.catalog-subfilters-bar-wrapper {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 15px 20px;
+  margin-bottom: 30px;
+}
+
+
+.subfilters-title {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+
+
+.catalog-subfilters-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; /* Горизонтальный скролл для длинного списка клубов */
+  padding-bottom: 5px;
+}
+
+
+/* Красивый тонкий скроллбар для списка клубов */
+.catalog-subfilters-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.catalog-subfilters-bar::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
+}
+
+
+.sub-filter-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-main);
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap; /* Чтобы названия клубов не переносились */
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+
+.sub-filter-btn:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+
+.sub-filter-btn.active {
+  opacity: 1;
+  background-color: #2ecc71; /* Зеленый футбольный акцент для выбранного клуба */
+  color: #ffffff;
+}
+
+
+.catalog-results-counter {
+  font-size: 12px;
+  margin-bottom: 20px;
+  opacity: 0.6;
+}
+
+
+.flex-layout-catalog {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 35px;
+  align-items: flex-start;
+  padding: 90px 40px 60px 40px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+
+.catalog-sidebar-filters {
+  width: 290px !important;
+  min-width: 290px !important;
+  background-color: var(--bg-navbar);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 26px;
+  position: sticky !important;
+  top: 20px !important;
+  max-height: 92vh !important;
+  overflow-y: auto !important;
+}
+
+.catalog-sidebar-filters::-webkit-scrollbar {
+  width: 5px;
+}
+
+.catalog-sidebar-filters::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+.sidebar-filter-section {
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 22px;
+}
+
+.sidebar-filter-section:last-of-type { border-bottom: none; padding-bottom: 0; }
+
+
+
+/* ПОДКЛЮЧЕНИЕ ВАШИХ SVG ИКОНОК С ТОЧНЫМИ НАЗВАНИЯМИ ИЗ ПАПКИ ICONS */
+.custom-checkbox {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  background-image: url('../assets/icons/unchek.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.1s ease-in-out;
+}
+
+/* Эффект, когда в чекбоксе стоит галочка */
+.filter-checkbox-label input:checked ~ .custom-checkbox {
+  background-image: url('../assets/icons/normal.svg');
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+
+/* ================= ПОДКЛЮЧЕНИЕ SVG ИКОНОК ДЛЯ РАДИО-КНОПОК КАТЕГОРИЙ ================= */
+.custom-radio {
+  width: 20px; /* Увеличила размер до 20px, чтобы они сочетались с чекбоксами */
+  height: 20px;
+  display: inline-block;
+  background-image: url('../assets/icons/radioempty.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.1s ease-in-out;
+}
+
+.filter-radio-label input:checked ~ .custom-radio {
+  /* Заменяем на иконку кружка с точкой */
+  background-image: url('../assets/icons/radiochecked.svg');
+  background-color: transparent !important; /* Убираем старую заливку */
+  border-color: transparent !important;
+}
+
+.custom-radio::after {
+  display: none !important;
+}
+
+
+.filter-radio-label:hover .custom-radio {
+  transform: scale(1.05);
+}
+
+.filter-radio-label input {
+  display: none !important;
+  position: absolute;
+  opacity: 0;
+}
+
+/* ПРАВАЯ ЧАСТЬ С ВИТРИНОЙ ТОВАРОВ */
+.catalog-main-content-right {
+  flex: 1 !important;          /* Занимает всё оставшееся пространство справа */
+  width: calc(100% - 310px);   /* Вычитаем ширину сайдбара и отступа */
+}
+
+/* СЕТКА КАРТОЧЕК ВНУТРИ КАТАЛОГА (ПО 3 В РЯД РЯДОМ С ФИЛЬТРАМИ) */
+.products-grid-container.grid-4-columns {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important; /* Ровно 3 компактные карточки в ряд */
+  gap: 20px;
+  width: 100%;
+}
+
+/* Фикс счетчика позиций, чтобы он не прыгал */
+.catalog-results-counter {
+  font-size: 13px;
+  margin-bottom: 20px;
+  opacity: 0.6;
+  text-align: left;
+}
+
+
+/* Компактная Сетка Grid по 4 товара в ряд */
+.products-grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+
+/* Компактная аккуратная карточка */
+.product-item-card {
+  background-color: var(--bg-navbar);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+
+.product-item-card:hover {
+  transform: translateY(-5px);
+  border-color: #2ecc71;
+  box-shadow: 0 8px 20px rgba(46, 204, 113, 0.15);
+}
+
+
+/* Компактный контейнер картинки */
+.product-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 220px; /* ограничила высоту картинок на витрине */
+  background-color: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.product-item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+
+.main-img { opacity: 1; z-index: 2; }
+
+.hover-img { opacity: 0; z-index: 1; }
+
+
+.product-item-card:hover .main-img { opacity: 0; }
+
+.product-item-card:hover .hover-img { opacity: 1; }
+
+
+.product-card-badge {
+  position: absolute;
+  top: 10px; left: 10px;
+  background-color: #ff4d4d;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 3px;
+  z-index: 5;
+}
+
+
+.product-card-info-content {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+
+.product-card-category-tag {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.5;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+
+.product-card-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  height: 36px;
+  overflow: hidden;
+}
+
+
+.product-card-price-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  margin-top: auto;
+}
+
+
+.product-card-current-price {
+  font-size: 16px;
+  font-weight: 900;
+  color: #2ecc71;
+}
+
+
+.product-card-old-price {
+  font-size: 12px;
+  text-decoration: line-through;
+  opacity: 0.4;
+}

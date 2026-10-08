@@ -1,0 +1,47 @@
+/* Переменные для легкого изменения цветов всей страницы */
+.dark-theme {
+  --bg-main: #0b0c10;
+  --bg-navbar: rgba(31, 40, 51, 0.4); /* Полупрозрачный фон для темной темы */
+  --text-main: #ffffff;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --btn-catalog-bg: transparent; /* В темной теме кнопка прозрачная */
+  --icon-filter: invert(1); /* Делает темные иконки белыми в темной теме */
+}
+
+
+.light-theme {
+  --bg-main: #ffffff; /* Чистый белый фон страницы */
+  --bg-navbar: rgba(255, 255, 255, 0.85); /* Светлый полупрозрачный фон хедера */
+  --text-main: #111111; /* Чёрный текст для светлой темы */
+  --border-color: rgba(0, 0, 0, 0.1);
+  --btn-catalog-bg: rgba(255, 255, 255, 0.4); /* ИСПРАВЛЕНО: Кнопка стала полупрозрачной белой */
+  --icon-filter: invert(0); /* Оставляет иконки темными */
+}
+
+
+/* Сброс базовых отступов */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  overflow-x: hidden;
+  background-color: #000000; /* Черная подложка, чтобы соответствовать фону баннера */
+  margin: 0;
+  padding: 0;
+}
+
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
