@@ -1,3 +1,5 @@
+import LangSwitcher from './components/LangSwitcher';
+import { useShopTranslation } from './i18n/useShopTranslation';
 import React, { useState, useEffect } from 'react';
 import './styles/main.scss';
 import BannerSlider from './components/BannerSlider';
@@ -33,6 +35,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 function App() {
+  const { t, productText, formatMoney } = useShopTranslation();
   const banners = [frame1, frame2, frame3, frame4, frame5];
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('deporteTheme') !== 'light');
   useEffect(() => { localStorage.setItem('deporteTheme', isDarkMode ? 'dark' : 'light'); }, [isDarkMode]);
@@ -112,7 +115,7 @@ function App() {
   const addToCart = async (product, selectedSize = 'M') => {
     const existing = cartItems.find(item => item.id === product.id && item.size === selectedSize);
     if (await changeCart(product, selectedSize, Math.min(100, (existing?.quantity || 0) + 1)))
-      setToast({ isVisible: true, message: `Товар добавлен в корзину! Размер: ${selectedSize}` });
+      setToast({ isVisible: true, message: t('Товар добавлен в корзину! Размер: {{size}}', { size: selectedSize }) });
   };
   const updateCartItem = (item, quantity) => changeCart(item, item.size || 'M', quantity);
   const clearCart = () => {
@@ -143,8 +146,8 @@ function App() {
 
         <section className="home-popular-section">
           <div className="section-title-container">
-            <h3 className="home-section-title">ХИТЫ ПРОДАЖ</h3>
-            <p className="home-section-subtitle">Популярные комплекты экипировки этого сезона</p>
+            <h3 className="home-section-title">{t("ХИТЫ ПРОДАЖ")}</h3>
+            <p className="home-section-subtitle">{t("Популярные комплекты экипировки этого сезона")}</p>
           </div>
 
           <div className="home-products-grid">
@@ -154,14 +157,14 @@ function App() {
                 <div key={p.id} className="home-product-card" onClick={() => navigate('/catalog')}>
                   <div className="home-card-image-wrapper">
                     <button className={`product-card-fav-btn ${isFav ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(p); }}>❤</button>
-                    <img src={p.image} alt={p.title} className="home-item-img main-img" />
-                    <img src={p.imageHover} alt={p.title} className="home-item-img hover-img" />
+                    <img src={p.image} alt={productText(p, 'title')} className="home-item-img main-img" />
+                    <img src={p.imageHover} alt={productText(p, 'title')} className="home-item-img hover-img" />
                   </div>
                   <div className="home-card-info">
                     <span className="home-card-tag">{p.category}</span>
-                    <h4 className="home-card-title">{p.title}</h4>
+                    <h4 className="home-card-title">{productText(p, 'title')}</h4>
                     <div className="home-card-footer">
-                      <span className="home-card-price">{p.price}</span>
+                      <span className="home-card-price">{formatMoney(p.priceNum)}</span>
                       <button className="home-card-buy-btn" onClick={(e) => { e.stopPropagation(); addToCart(p, 'M'); }}>🛒</button>
                     </div>
                   </div>
@@ -181,7 +184,7 @@ function App() {
 
           <div className="more-products-link-container">
             <button className="view-more-btn" onClick={() => navigate('/catalog')}>
-              СМОТРЕТЬ БОЛЬШЕ ТОВАРОВ <span className="arrow-icon">➔</span>
+              {t("СМОТРЕТЬ БОЛЬШЕ ТОВАРОВ")} <span className="arrow-icon">➔</span>
             </button>
           </div>
         </section>
@@ -198,44 +201,45 @@ function App() {
 
       <header className="main-header">
         <div className="header-left">
-          <button className="catalog-btn" onClick={() => navigate('/catalog')}>☰ КАТАЛОГ</button>
+          <button className="catalog-btn" onClick={() => navigate('/catalog')}>{t("☰ КАТАЛОГ")}</button>
         </div>
         <div className="header-center" style={{ display: 'flex', justifyContent: 'center', flexGrow: 1 }}>
           <div className="brand-logo" onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: '0 auto' }}>
-            <img src={ball} alt="Мяч" style={{ width: '26px', height: '26px', filter: 'var(--icon-filter)' }} />
+            <img src={ball} alt={t("Мяч")} style={{ width: '26px', height: '26px', filter: 'var(--icon-filter)' }} />
             <span style={{ fontWeight: 900, letterSpacing: '1px' }}>DEPORTE</span>
           </div>
         </div>
         <div className="header-right">
+          <LangSwitcher />
           <div className="phone-container">
-            <img src={phone} alt="Телефон" className="phone-icon" />
+            <img src={phone} alt={t("Телефон")} className="phone-icon" />
             <a href="tel:89181141728" className="phone-number">8 (918) 114-17-28</a>
           </div>
           <button className="nav-icon-btn" onClick={() => navigate('/catalog')}>
-            <img src={search} alt="Поиск" className="custom-icon" />
+            <img src={search} alt={t("Поиск")} className="custom-icon" />
           </button>
 
           {/* ИСПРАВЛЕНО: иконка профиля, под которой пишется имя вошедшего аккаунта */}
-          <button className="nav-icon-btn premium-header-user-btn" onClick={() => navigate('/profile')} title="Личный кабинет">
+          <button className="nav-icon-btn premium-header-user-btn" onClick={() => navigate('/profile')} title={t("Личный кабинет")}>
             <div className="header-user-icon-container">
-              <img src={userIcon} alt="Профиль" className="custom-icon" />
+              <img src={userIcon} alt={t("Профиль")} className="custom-icon" />
               {currentUser?.id && (
                 <span className={`header-user-name-label ${currentUser.role}`}>
-                  {currentUser.name.split(' ')[0]} {/* Берем только первое имя без фамилии, чтобы не растягивать шапку */}
+                  {currentUser.role === 'admin' ? t('Администратор') : currentUser.name.split(' ')[0]} {/* Берем только первое имя без фамилии, чтобы не растягивать шапку */}
                 </span>
               )}
             </div>
           </button>
 
           <button className="nav-icon-btn cart-btn" onClick={() => navigate('/favorites')}>
-            <img src={heart} alt="Избранное" className="custom-icon" />
+            <img src={heart} alt={t("Избранное")} className="custom-icon" />
             {favorites.length > 0 && <span className="cart-badge" style={{ backgroundColor: '#2ecc71' }}>{favorites.length}</span>}
           </button>
           <button className="nav-icon-btn cart-btn" onClick={() => navigate('/cart')}>
-            <img src={cart} alt="Корзина" className="custom-icon" />
+            <img src={cart} alt={t("Корзина")} className="custom-icon" />
             {totalCartCount > 0 && <span className="cart-badge">{totalCartCount}</span>}
           </button>
-          <button className="theme-toggle-btn" onClick={() => setIsDarkMode(!isDarkMode)}><img src={isDarkMode ? sunIcon : moonIcon} alt="Тема" className="custom-icon theme-icon-img" /></button>
+          <button className="theme-toggle-btn" onClick={() => setIsDarkMode(!isDarkMode)}><img src={isDarkMode ? sunIcon : moonIcon} alt={t("Тема")} className="custom-icon theme-icon-img" /></button>
         </div>
       </header>
       <div className="page-content-wrapper">
@@ -249,7 +253,7 @@ function App() {
                   <Route
           path="/checkout"
           element={<Checkout cartItems={cartItems} clearCart={clearCart} currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
-          <Route path="/profile" element={!authReady ? <p>Проверка сессии…</p> : !currentUser.id ? <Navigate to="/login" replace /> : <Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
+          <Route path="/profile" element={!authReady ? <p>{t("Проверка сессии…")}</p> : !currentUser.id ? <Navigate to="/login" replace /> : <Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />} />
         {/* ПУТИ ДЛЯ СТРАНИЦ АВТОРИЗАЦИИ И РЕГИСТРАЦИИ */}
           <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
           <Route path="/register" element={<Register />} />

@@ -10,12 +10,13 @@
 - Оформление заказов. При заказе без регистрации создаётся аккаунт.
 - Админка для управления товарами и просмотра пользователей и заказов.
 - Светлая и тёмная темы.
+- Переключение русского, английского и испанского языков с сохранением выбора.
 
 Каталог содержит минимум 120 демонстрационных товаров. Онлайн-оплата не подключена.
 
 ## Технологии
 
-- Frontend: React, React Router, Redux Toolkit, SCSS, Vite.
+- Frontend: React, React Router, Redux Toolkit, i18next, react-i18next, SCSS, Vite.
 - Backend: Python, FastAPI, SQLAlchemy, Alembic.
 - База данных: PostgreSQL. Сессии пользователей: Redis.
 - Запуск серверной части: Docker Compose и Nginx.

@@ -1,8 +1,10 @@
+import { useShopTranslation } from '../i18n/useShopTranslation';
 import { imageUrl } from '../api';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 function Cart({ cartItems = [], updateCartItem, busy }) {
+  const { t, productText, formatMoney } = useShopTranslation();
   // Функция для удаления конкретного элемента из корзины
   const handleRemoveItem = (idxToRemove, e) => {
     e.stopPropagation(); // Чтобы клик не открывал модальное окно
@@ -16,20 +18,20 @@ function Cart({ cartItems = [], updateCartItem, busy }) {
   // Считаем общую стоимость и количество позиций
   const totalPositions = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
   const totalPriceNum = cartItems.reduce((acc, item) => acc + ((item.price_num || item.priceNum || 0) * (item.quantity || 1)), 0);
-  const totalPriceStr = `${totalPriceNum.toLocaleString('ru-RU')} ₽`;
+  const totalPriceStr = `${totalPriceNum.toLocaleString(t('numberLocale'))} ₽`;
 
   return (
     <div className="catalog-page-container" style={{ padding: '120px 40px' }}>
       <div className="catalog-header-section" style={{ marginBottom: '40px' }}>
-        <h2 className="catalog-main-title">КОРЗИНА ТОВАРОВ</h2>
-        <p className="catalog-subtitle">Проверьте выбранную экипировку и перейдите к оформлению заказа</p>
+        <h2 className="catalog-main-title">{t("КОРЗИНА ТОВАРОВ")}</h2>
+        <p className="catalog-subtitle">{t("Проверьте выбранную экипировку и перейдите к оформлению заказа")}</p>
       </div>
 
       {cartItems.length === 0 ? (
         <div className="empty-cart-message" style={{ textAlign: 'center', padding: '60px 0', opacity: 0.5 }}>
           <span style={{ fontSize: '48px', display: 'block', marginBottom: '20px' }}>🛒</span>
-          <h3>Ваша корзина пуста,чувак</h3>
-          <p>Перейдите в каталог, чтобы добавить спортивные товары сюды.</p>
+          <h3>{t("Ваша корзина пуста,чувак")}</h3>
+          <p>{t("Перейдите в каталог, чтобы добавить спортивные товары сюды.")}</p>
         </div>
       ) : (
         <div className="cart-page-layout" style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
@@ -56,7 +58,7 @@ function Cart({ cartItems = [], updateCartItem, busy }) {
                   <div className="product-card-image-wrapper" style={{ width: '100px', height: '100px', minWidth: '100px', backgroundColor: 'var(--surface)', borderRadius: '8px', overflow: 'hidden' }}>
                     <img
                       src={imageUrl(item.image)}
-                      alt={item.title}
+                      alt={productText(item, 'title')}
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/spainfuria2026.png'; }} // ИСПРАВЛЕНО: Защита от отсутствующих файлов
                     />
@@ -64,9 +66,9 @@ function Cart({ cartItems = [], updateCartItem, busy }) {
 
                   {/* Информация о товаре */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span className="product-card-category-tag" style={{ margin: 0, fontSize: '12px', opacity: 0.5 }}>РАЗМЕР: {item.size || 'M'}</span>
-                    <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>{item.title}</h4>
-                    <span style={{ fontSize: '16px', fontWeight: '900', color: '#2ecc71', marginTop: '6px' }}>{item.price_str || item.price}</span>
+                    <span className="product-card-category-tag" style={{ margin: 0, fontSize: '12px', opacity: 0.5 }}>{t("РАЗМЕР:")} {item.size || 'M'}</span>
+                    <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>{productText(item, 'title')}</h4>
+                    <span style={{ fontSize: '16px', fontWeight: '900', color: '#2ecc71', marginTop: '6px' }}>{formatMoney(item.price_num ?? item.priceNum)}</span>
                   </div>
 
                   {/* Блок изменения количества */}
@@ -82,29 +84,29 @@ function Cart({ cartItems = [], updateCartItem, busy }) {
 
           {/* ПРАВАЯ ЧАСТЬ: Итоговый чек покупки */}
           <div className="cart-total-summary-card" style={{ width: '360px', backgroundColor: 'var(--bg-card)', borderRadius: '16px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>ИТОГО К ОПЛАТЕ</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>{t("ИТОГО К ОПЛАТЕ")}</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.7 }}>
-                <span>Позиций в заказе:</span>
-                <strong>{totalPositions} шт.</strong>
+                <span>{t("Позиций в заказе:")}</span>
+                <strong>{totalPositions} {t('шт.')}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', opacity: 0.7 }}>
-                <span>Доставка:</span>
-                <strong style={{ color: '#2ecc71' }}>Бесплатно</strong>
+                <span>{t("Доставка:")}</span>
+                <strong style={{ color: '#2ecc71' }}>{t("Бесплатно")}</strong>
               </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '16px', fontWeight: 700 }}>Общая сумма:</span>
-              <span style={{ fontSize: '24px', fontWeight: 900, color: '#2ecc71' }}>{totalPriceStr}</span>
+              <span style={{ fontSize: '16px', fontWeight: 700 }}>{t("Общая сумма:")}</span>
+              <span style={{ fontSize: '24px', fontWeight: 900, color: '#2ecc71' }}>{formatMoney(totalPriceNum)}</span>
             </div>
             <Link to="/checkout" style={{ textDecoration: 'none', width: '100%', display: 'block' }}>
               <button
                 className="modal-action-buy-btn"
                 style={{ width: '100%', padding: '16px', backgroundColor: '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: '0.3s' }}
               >
-                ОФОРМИТЬ ЗАКАЗ ➔
+                {t("ОФОРМИТЬ ЗАКАЗ ➔")}
               </button>
             </Link>
           </div>

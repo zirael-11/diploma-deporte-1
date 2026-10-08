@@ -1,3 +1,4 @@
+import i18n from './i18n/index.js';
 export const GUEST = { name: 'Гость', role: 'guest' };
 
 export async function api(path, options = {}) {
@@ -9,13 +10,13 @@ export async function api(path, options = {}) {
   const text = await response.text();
   let data;
   try { data = text ? JSON.parse(text) : null; }
-  catch { throw new Error('Сервер вернул некорректный ответ. Проверьте запуск Docker.'); }
+  catch { throw new Error(i18n.t('Сервер вернул некорректный ответ. Проверьте запуск Docker.')); }
   if (!response.ok) {
     const detail = data?.detail;
     const message = Array.isArray(detail)
       ? detail.map(item => `${item.loc?.slice(1).join('.')}: ${item.msg}`).join('; ')
-      : typeof detail === 'string' ? detail : `Ошибка сервера (${response.status})`;
-    const error = new Error(message);
+      : typeof detail === 'string' ? detail : i18n.t('Ошибка сервера ({{status}})', { status: response.status });
+    const error = new Error(i18n.t(message, { defaultValue: message }));
     error.status = response.status;
     throw error;
   }

@@ -1,3 +1,4 @@
+import { useShopTranslation } from '../i18n/useShopTranslation';
 import { api } from '../api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -5,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'; // 🎯 Хуки Redux
 import { fetchProducts } from '../store/productsSlice'; // 🎯 Экшен загрузки базы
 
 function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
+  const { t, productText, formatMoney } = useShopTranslation();
     // Состояния для формы добавления нового товара модератором
     const [newTitle, setNewTitle] = useState('');
     const [newCategory, setNewCategory] = useState('Форма сборных');
@@ -24,10 +26,10 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
 
     const handleCreateProduct = async (e) => {
         e.preventDefault();
-        if (!newTitle || !newPrice) return alert('Заполните название и цену!');
+        if (!newTitle || !newPrice) return alert(t("Заполните название и цену!"));
 
         const cleanPriceNum = parseInt(newPrice.replace(/[^\d]/g, '')) || 0;
-        const formattedPriceStr = `${cleanPriceNum.toLocaleString('ru-RU')} ₽`;
+        const formattedPriceStr = `${cleanPriceNum.toLocaleString(t('numberLocale'))} ₽`;
 
         const productPayload = {
             title: newTitle,
@@ -46,7 +48,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
         try {
             await api('/products', { method: 'POST', body: JSON.stringify(productPayload) });
             dispatch(fetchProducts());
-            alert('Товар добавлен в PostgreSQL');
+            alert(t("Товар добавлен в PostgreSQL"));
         } catch (error) {
             console.error(error);
             alert(error.message);
@@ -103,7 +105,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
     const handleAddProductToCartBackend = product => addToCart?.(product);
     const handleDeleteProduct = async (e, id) => {
         e.stopPropagation();
-        if (!window.confirm('Удалить товар из каталога?')) return;
+        if (!window.confirm(t("Удалить товар из каталога?"))) return;
         try {
             await api(`/products/${encodeURIComponent(id)}`, { method: 'DELETE' });
             dispatch(fetchProducts());
@@ -120,7 +122,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
 
     const handleSaveChanges = async () => {
         const price = Number(editPrice.replace(/\s/g, '').replace(',', '.'));
-        if (!Number.isFinite(price) || price < 0) return alert('Укажите корректную цену');
+        if (!Number.isFinite(price) || price < 0) return alert(t("Укажите корректную цену"));
         setSaving(true);
         try {
             await api(`/products/${encodeURIComponent(selectedProduct.id)}`, {
@@ -160,27 +162,27 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
     return (
         <div className="catalog-page-container flex-layout-catalog">
             {productsError && <p className="auth-error" role="alert">{productsError}</p>}
-            {productsStatus === 'loading' && <p>Загрузка каталога…</p>}
+            {productsStatus === 'loading' && <p>{t("Загрузка каталога…")}</p>}
             <aside className="catalog-sidebar-filters">
                 <div className="sidebar-filter-section">
-                    <h4>КАТЕГОРИЯ</h4>
+                    <h4>{t("КАТЕГОРИЯ")}</h4>
                     <div className="filter-options-list">
                         {mainCategories.map(c => (
                             <label key={c} className="filter-radio-label">
                                 <input type="radio" name="mainCat" checked={selectedMainCat === c} onChange={() => setSelectedMainCat(c)} />
-                                <span className="custom-radio"></span> {c}
+                                <span className="custom-radio"></span> {t(c)}
                             </label>
                         ))}
                     </div>
                 </div>
 
                 <div className="sidebar-filter-section">
-                    <h4>ТИП ЭКИПИРОВКИ</h4>
+                    <h4>{t("ТИП ЭКИПИРОВКИ")}</h4>
                     <div className="filter-options-list">
                         {typesList.map(type => (
                             <label key={type} className="filter-checkbox-label">
                                 <input type="checkbox" checked={selectedTypes.includes(type)} onChange={() => toggleFilter(type, selectedTypes, setSelectedTypes)} />
-                                <span className="custom-checkbox"></span> {type}
+                                <span className="custom-checkbox"></span> {t(type)}
                             </label>
                         ))}
                     </div>
@@ -188,12 +190,12 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
 
                 {(selectedMainCat === 'Все' || selectedMainCat === 'Форма сборных' || selectedMainCat === 'Форма по клубам') && (
                     <div className="sidebar-filter-section">
-                        <h4>СТРАНЫ</h4>
+                        <h4>{t("СТРАНЫ")}</h4>
                         <div className="filter-options-list scrollable-options">
                             {countriesList.map(country => (
                                 <label key={country} className="filter-checkbox-label">
                                     <input type="checkbox" checked={selectedCountries.includes(country)} onChange={() => toggleFilter(country, selectedCountries, setSelectedCountries)} />
-                                    <span className="custom-checkbox"></span> {country}
+                                    <span className="custom-checkbox"></span> {t(country)}
                                 </label>
                             ))}
                         </div>
@@ -202,31 +204,31 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
 
                 {(selectedMainCat === 'Все' || selectedMainCat === 'Форма по клубам') && (
                     <div className="sidebar-filter-section">
-                        <h4>КЛУБЫ</h4>
+                        <h4>{t("КЛУБЫ")}</h4>
                         <div className="filter-options-list scrollable-options">
                             {allClubs.map(club => (
                                 <label key={club} className="filter-checkbox-label">
                                     <input type="checkbox" checked={selectedClubs.includes(club)} onChange={() => toggleFilter(club, selectedClubs, setSelectedClubs)} />
-                                    <span className="custom-checkbox"></span> {club}
+                                    <span className="custom-checkbox"></span> {t(club)}
                                 </label>
                             ))}
                         </div>
                     </div>
                 )}
                 <div className="sidebar-filter-section">
-                    <h4>ЦЕНА</h4>
+                    <h4>{t("ЦЕНА")}</h4>
                     <div className="filter-options-list">
                         {priceRanges.map((range, index) => (
                             <label key={index} className="filter-radio-label">
                                 <input type="radio" name="priceRange" checked={selectedPriceRange === index} onChange={() => setSelectedPriceRange(index)} />
-                                <span className="custom-radio"></span> {range.label}
+                                <span className="custom-radio"></span> {t(range.label)}
                             </label>
                         ))}
                     </div>
                 </div>
 
                 <div className="sidebar-filter-section">
-                    <h4>ГОД ВЫПУСКА</h4>
+                    <h4>{t("ГОД ВЫПУСКА")}</h4>
                     <div className="filter-options-list">
                         {yearsList.map(year => (
                             <label key={year} className="filter-checkbox-label">
@@ -238,7 +240,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                 </div>
 
                 <div className="sidebar-filter-section">
-                    <h4>РАЗМЕР</h4>
+                    <h4>{t("РАЗМЕР")}</h4>
                     <div className="filter-options-list">
                         {sizesList.map(size => (
                             <label key={size} className="filter-checkbox-label">
@@ -249,33 +251,33 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                     </div>
                 </div>
 
-                <button className="reset-all-filters-btn-premium" onClick={handleResetFilters}>Сбросить фильтры</button>
+                <button className="reset-all-filters-btn-premium" onClick={handleResetFilters}>{t("Сбросить фильтры")}</button>
             </aside>
 
             <div className="catalog-main-content-right">
-                <div className="catalog-results-counter">Найдено позиций: <strong>{filteredProducts.length}</strong></div>
+                <div className="catalog-results-counter">{t("Найдено позиций:")} <strong>{filteredProducts.length}</strong></div>
 
                 {currentUser?.role === 'admin' && (
                     <form onSubmit={handleCreateProduct} style={{ backgroundColor: '#1e1e1e', padding: '20px', marginBottom: '20px', borderRadius: '10px' }}>
-                        <h3 style={{ color: '#e67e22', margin: '0 0 15px 0' }}>ДОБАВЛЕНИЕ НОВОГО ТОВАРА</h3>
+                        <h3 style={{ color: '#e67e22', margin: '0 0 15px 0' }}>{t("ДОБАВЛЕНИЕ НОВОГО ТОВАРА")}</h3>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                             <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Название</label>
-                                <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Например: Джерси Реал Мадрид" style={{ width: '100%', padding: '8px', background: '#333', color: 'var(--text-main)', border: '1px solid #444', borderRadius: '5px' }} />
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>{t("Название")}</label>
+                                <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder={t("Например: Джерси Реал Мадрид")} style={{ width: '100%', padding: '8px', background: '#333', color: 'var(--text-main)', border: '1px solid #444', borderRadius: '5px' }} />
                             </div>
                             <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Цена</label>
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>{t("Цена")}</label>
                                 <input type="text" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="5400" style={{ width: '100%', padding: '8px', background: '#333', color: 'var(--text-main)', border: '1px solid #444', borderRadius: '5px' }} />
                             </div>
                             <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>Категория</label>
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', opacity: 0.7 }}>{t("Категория")}</label>
                                 <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ width: '100%', padding: '8px', background: '#333', color: 'var(--text-main)', border: '1px solid #444', borderRadius: '5px' }}>
-                                    <option value="Форма сборных">Форма сборных</option>
-                                    <option value="Форма по клубам">Форма по клубам</option>
+                                    <option value="Форма сборных">{t("Форма сборных")}</option>
+                                    <option value="Форма по клубам">{t("Форма по клубам")}</option>
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" style={{ marginTop: '15px', padding: '10px 20px', background: '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Сохранить в базу</button>
+                        <button type="submit" style={{ marginTop: '15px', padding: '10px 20px', background: '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>{t("Сохранить в базу")}</button>
                     </form>
                 )}
 
@@ -292,25 +294,25 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                                     <img
                                         src={p.image.includes('/') ? p.image : `/images/${p.image || 'spainfuria2026.png'}`}
                                         className="product-item-img"
-                                        alt={p.title}
+                                        alt={productText(p, 'title')}
                                         onMouseEnter={(e) => { if(p.image_hover) e.currentTarget.src = p.image_hover.includes('/') ? p.image_hover : `/images/${p.image_hover}`; }}
                                         onMouseLeave={(e) => { e.currentTarget.src = p.image.includes('/') ? p.image : `/images/${p.image || 'spainfuria2026.png'}`; }}
                                         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/spainfuria2026.png'; }}
                                     />
                                 </div>
                                 <div className="product-card-info-content">
-                                    <span className="product-card-category-tag">{p.main_category} {p.club ? `| ${p.club}` : ''}</span>
-                                    <h4 className={`product-card-item-title ${currentUser?.role === 'admin' ? 'admin' : ''}`}>{p.title}</h4>
+                                    <span className="product-card-category-tag">{t(p.main_category || '')} {p.club ? `| ${t(p.club)}` : ''}</span>
+                                    <h4 className={`product-card-item-title ${currentUser?.role === 'admin' ? 'admin' : ''}`}>{productText(p, 'title')}</h4>
                                     <div className="product-card-price-row">
-                                        <span className="product-card-current-price">{p.price_str || `${p.price_num} ₽`}</span>
+                                        <span className="product-card-current-price">{formatMoney(p.price_num ?? p.priceNum)}</span>
                                         <button className="product-card-buy-btn" onClick={(e) =>  { e.stopPropagation(); handleAddProductToCartBackend(p); }}>
-                                            ДОБАВИТЬ В КОРЗИНУ
+                                            {t("ДОБАВИТЬ В КОРЗИНУ")}
                                         </button>
                                     </div>
                                     {currentUser?.role === 'admin' && (
                                         <div style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-                                            <button className="edit-product-button" onClick={e => { e.stopPropagation(); handleOpenEditModal(p); setIsEditing(true); }}>РЕДАКТИРОВАТЬ</button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteProduct(e, p.id); }} style={{ flex: 1, padding: '4px', background: '#c0392b', color: 'var(--text-main)', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '11px' }}>УДАЛИТЬ ИЗ БАЗЫ</button>
+                                            <button className="edit-product-button" onClick={e => { e.stopPropagation(); handleOpenEditModal(p); setIsEditing(true); }}>{t("РЕДАКТИРОВАТЬ")}</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteProduct(e, p.id); }} style={{ flex: 1, padding: '4px', background: '#c0392b', color: 'var(--text-main)', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '11px' }}>{t("УДАЛИТЬ ИЗ БАЗЫ")}</button>
                                         </div>
                                     )}
                                 </div>
@@ -321,9 +323,9 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
 
                 {totalPages > 1 && (
                     <div className="pagination-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '30px' }}>
-                        <button type="button" onClick={() => { setCurrentPage(prev => Math.max(prev - 1, 1)); window.scrollTo(0, 0); }} disabled={currentPage === 1} style={{ padding: '10px 20px', backgroundColor: currentPage === 1 ? '#222' : '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Назад</button>
-                        <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>Страница {currentPage} из {totalPages}</span>
-                        <button type="button" onClick={() => { setCurrentPage(prev => Math.min(prev + 1, totalPages)); window.scrollTo(0, 0); }} disabled={currentPage === totalPages} style={{ padding: '10px 20px', backgroundColor: currentPage === totalPages ? '#222' : '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Вперед</button>
+                        <button type="button" onClick={() => { setCurrentPage(prev => Math.max(prev - 1, 1)); window.scrollTo(0, 0); }} disabled={currentPage === 1} style={{ padding: '10px 20px', backgroundColor: currentPage === 1 ? '#222' : '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>{t("Назад")}</button>
+                        <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>{t("Страница")} {currentPage} {t('из')} {totalPages}</span>
+                        <button type="button" onClick={() => { setCurrentPage(prev => Math.min(prev + 1, totalPages)); window.scrollTo(0, 0); }} disabled={currentPage === totalPages} style={{ padding: '10px 20px', backgroundColor: currentPage === totalPages ? '#222' : '#e67e22', color: 'var(--text-main)', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>{t("Вперед")}</button>
                     </div>
                 )}
             </div>
@@ -341,7 +343,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                                 <Link to={`/product/${selectedProduct.id}`} onClick={() => setSelectedProduct(null)} style={{ display: 'block', width: '100%' }}>
                                     <img
                                         src={selectedProduct.image.includes('/') ? selectedProduct.image : `/images/${selectedProduct.image}`}
-                                        alt={selectedProduct.title}
+                                        alt={productText(selectedProduct, 'title')}
                                         className="modal-main-img"
                                     />
                                 </Link>
@@ -349,31 +351,31 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
 
                             {/* Правая колонка с текстом и кнопками */}
                             <div className="modal-product-details">
-                                <span className="modal-category-tag">{selectedProduct.main_category}</span>
+                                <span className="modal-category-tag">{t(selectedProduct.main_category || '')}</span>
 
                                 <Link to={`/product/${selectedProduct.id}`} onClick={() => setSelectedProduct(null)} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                    <h4 className="modal-product-title">{selectedProduct.title}</h4>
+                                    <h4 className="modal-product-title">{productText(selectedProduct, 'title')}</h4>
                                 </Link>
 
                                 <div className="modal-price-box">
-                                    <span className="modal-current-price">{selectedProduct.price_str || `${selectedProduct.price_num} ₽`}</span>
+                                    <span className="modal-current-price">{formatMoney(selectedProduct.price_num ?? selectedProduct.priceNum)}</span>
                                 </div>
 
                                 {currentUser?.role === 'admin' && <button className="edit-product-button" onClick={() => setIsEditing(value => !value)}>
-                                  {isEditing ? 'Закрыть редактирование' : 'Редактировать товар'}
+                                  {isEditing ? t("Закрыть редактирование") : t("Редактировать товар")}
                                 </button>}
                                 {isEditing && currentUser?.role === 'admin' && <form className="product-edit-form" onSubmit={e => { e.preventDefault(); handleSaveChanges(); }}>
-                                  <label>Название<input value={editTitle} onChange={e => setEditTitle(e.target.value)} required maxLength={255} /></label>
-                                  <label>Цена, ₽<input type="number" min="0" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)} required /></label>
-                                  <label>Описание<textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} maxLength={500} /></label>
-                                  <button type="submit" disabled={saving}>{saving ? 'Сохранение…' : 'Сохранить в базе'}</button>
+                                  <label>{t("Название")}<input value={editTitle} onChange={e => setEditTitle(e.target.value)} required maxLength={255} /></label>
+                                  <label>{t("Цена, ₽")}<input type="number" min="0" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)} required /></label>
+                                  <label>{t("Описание")}<textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} maxLength={500} /></label>
+                                  <button type="submit" disabled={saving}>{saving ? t("Сохранение…") : t("Сохранить в базе")}</button>
                                 </form>}
                                 <div className="modal-description-block">
-                                    <p>{selectedProduct.description || "Премиальная футбольная экипировка оригинального качества. Изготовлена из высокотехнологичных дышащих материалов."}</p>
+                                    <p>{productText(selectedProduct, 'description')}</p>
                                 </div>
 
                                 <div className="modal-size-selector-block">
-                                    <h5>ВЫБЕРИТЕ РАЗМЕР:</h5>
+                                    <h5>{t("ВЫБЕРИТЕ РАЗМЕР:")}</h5>
                                     <div style={{ display: 'flex', gap: '6px' }}>
                                         {sizesList.map(sz => (
                                             <button
@@ -388,7 +390,7 @@ function Catalog({ favorites = [], toggleFavorite, addToCart, currentUser }) {
                                 </div>
 
                                 <button className="modal-action-buy-btn" onClick={() => { addToCart(selectedProduct, modalSize); setSelectedProduct(null); }}>
-                                    ДОБАВИТЬ В КОРЗИНУ
+                                    {t("ДОБАВИТЬ В КОРЗИНУ")}
                                 </button>
                             </div>
 

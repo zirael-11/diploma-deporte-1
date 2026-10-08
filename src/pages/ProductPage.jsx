@@ -1,9 +1,11 @@
+import { useShopTranslation } from '../i18n/useShopTranslation';
 import { imageUrl } from '../api';
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux'; // 🎯 Подключаем чтение из Redux Toolkit
 
 function ProductPage({ addToCart }) {
+  const { t, productText, formatMoney } = useShopTranslation();
   // 🎯 Считываем ID товара из адресной строки браузера (например, "1", "2" или "4")
   const { id } = useParams();
 
@@ -20,8 +22,8 @@ function ProductPage({ addToCart }) {
   if (!product) {
     return (
       <div style={{ padding: '40px', color: 'var(--text-main)', textAlign: 'center' }}>
-        <h2>Товар не найден</h2>
-        <Link to="/" style={{ color: '#e67e22' }}>Вернуться в каталог</Link>
+        <h2>{t("Товар не найден")}</h2>
+        <Link to="/" style={{ color: '#e67e22' }}>{t("Вернуться в каталог")}</Link>
       </div>
     );
   }
@@ -31,7 +33,7 @@ function ProductPage({ addToCart }) {
 
       {/* Хлебные крошки для навигации */}
       <div className="breadcrumbs" style={{ fontSize: '13px', opacity: 0.5, marginBottom: '20px' }}>
-        <Link to="/" style={{ color: 'var(--text-main)', textDecoration: 'none' }}>Каталог</Link> / {product.main_category} / {product.title}
+        <Link to="/" style={{ color: 'var(--text-main)', textDecoration: 'none' }}>{t("Каталог")}</Link> / {t(product.main_category || '')} / {productText(product, 'title')}
       </div>
 
       <div className="product-main-layout" style={{ display: 'flex', gap: '50px', background: 'var(--surface)', padding: '40px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
@@ -40,7 +42,7 @@ function ProductPage({ addToCart }) {
         <div className="product-image-side" style={{ flex: 1, display: 'flex', justifyContent: 'center', background: 'var(--surface-alt)', borderRadius: '12px', padding: '20px' }}>
           <img
             src={imageUrl(product.image)}
-            alt={product.title}
+            alt={productText(product, 'title')}
             style={{ maxWidth: '100%', maxHeight: '450px', objectFit: 'contain' }}
           />
         </div>
@@ -48,31 +50,31 @@ function ProductPage({ addToCart }) {
         {/* Правая колонка: Текстовая информация, размеры и кнопка */}
         <div className="product-info-side" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <span style={{ color: '#e67e22', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {product.main_category} {product.club ? `| ${product.club}` : ''}
+            {t(product.main_category || '')} {product.club ? `| ${t(product.club)}` : ''}
           </span>
 
           <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '700', lineHeight: '1.2' }}>
-            {product.title}
+            {productText(product, 'title')}
           </h1>
 
           <p style={{ color: '#aaa', fontSize: '15px', lineHeight: '1.6', margin: 0 }}>
-            {product.description || "Официальный комплект формы премиального качества. Изготовлен из высокотехнологичных дышащих материалов, обеспечивающих максимальный комфорт."}
+            {productText(product, 'description')}
           </p>
 
           <div style={{ fontSize: '14px', color: '#888' }}>
-            <div><strong>Страна:</strong> {product.country}</div>
-            {product.club && <div><strong>Клуб:</strong> {product.club}</div>}
-            <div><strong>Сезон:</strong> {product.year} гг.</div>
-            <div><strong>Тип экипировки:</strong> {product.type}</div>
+            <div><strong>{t("Страна:")}</strong> {t(product.country || '')}</div>
+            {product.club && <div><strong>{t("Клуб:")}</strong> {product.club}</div>}
+            <div><strong>{t("Сезон:")}</strong> {product.year}</div>
+            <div><strong>{t("Тип экипировки:")}</strong> {t(product.type || '')}</div>
           </div>
 
           <div style={{ color: '#27ae60', fontWeight: 'bold', fontSize: '36px', margin: '10px 0' }}>
-            {product.price_str || `${product.price_num} ₽`}
+            {formatMoney(product.price_num ?? product.priceNum)}
           </div>
 
           {/* Селектор размеров */}
           <div className="size-selector-section">
-            <span style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', opacity: 0.6, marginBottom: '10px' }}>ВЫБЕРИТЕ РАЗМЕР:</span>
+            <span style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', opacity: 0.6, marginBottom: '10px' }}>{t("ВЫБЕРИТЕ РАЗМЕР:")}</span>
             <div style={{ display: 'flex', gap: '8px' }}>
               {sizesList.map(sz => (
                 <button
@@ -97,7 +99,7 @@ function ProductPage({ addToCart }) {
 
           {/* Кнопка добавления в корзину */}
           <button
-            onClick={() => addToCart({ ...product, selectedSize })}
+            onClick={() => addToCart(product, selectedSize)}
             style={{
               width: '100%',
               padding: '15px',
@@ -112,7 +114,7 @@ function ProductPage({ addToCart }) {
               transition: '0.2s'
             }}
           >
-            ДОБАВИТЬ В КОРЗИНУ
+            {t("ДОБАВИТЬ В КОРЗИНУ")}
           </button>
         </div>
 
